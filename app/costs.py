@@ -24,18 +24,24 @@ Two very different kinds of number live in this file:
 from __future__ import annotations
 
 # ----------------------------------------------------------------- pricing --
-# USD per million tokens: (input, output). Verify against the pricing page —
-# these follow the historical Claude tier pattern (flagship / mid / fast).
+# USD per million tokens: (input, output). Verify against each provider's
+# pricing page — Anthropic tiers follow the historical Claude pattern,
+# Gemini figures are the standard paid-tier rates (the free tier is $0;
+# the estimate still shows what the call *would* cost).
 _PRICE_TIERS: dict[str, tuple[float, float]] = {
     "claude-opus":   (15.00, 75.00),
     "claude-sonnet": (3.00, 15.00),
     "claude-haiku":  (0.80, 4.00),
     "claude-fable":  (1.00, 5.00),
+    "gemini-2.5-pro":   (1.25, 10.00),
+    "gemini-2.5-flash": (0.30, 2.50),
+    "gemini": (0.30, 2.50),  # fallback for other Gemini models
 }
 _DEFAULT_TIER = "claude-sonnet"
 
 _CACHE_WRITE_MULT = 1.25   # writing to the cache costs a bit more than a plain input token
-_CACHE_READ_MULT = 0.10    # reading from the cache costs roughly a tenth as much
+_CACHE_READ_MULT = 0.10    # Anthropic: cached read ≈ a tenth of input price
+_CACHE_READ_MULT_GEMINI = 0.25  # Gemini implicit caching: 75% discount
 
 # ------------------------------------------------------------------ energy --
 # Wh per token, split input (prefill, parallelisable → cheaper) vs output
@@ -46,6 +52,9 @@ _ENERGY_TIERS: dict[str, tuple[float, float]] = {
     "claude-sonnet": (0.0006, 0.0025),
     "claude-haiku":  (0.00025, 0.0010),
     "claude-fable":  (0.0004, 0.0016),
+    "gemini-2.5-pro":   (0.0006, 0.0025),
+    "gemini-2.5-flash": (0.00025, 0.0010),
+    "gemini": (0.00025, 0.0010),
 }
 
 GRID_G_CO2_PER_KWH = 480.0   # global average grid carbon intensity (IEA/Ember, rough)
@@ -79,11 +88,12 @@ def estimate(model: str, usage: dict) -> dict:
     cache_creation = usage.get("cache_creation_tokens", 0)
     cache_read = usage.get("cache_read_tokens", 0)
 
+    read_mult = _CACHE_READ_MULT_GEMINI if model.startswith("gemini") else _CACHE_READ_MULT
     price_in, price_out = _tier(model, _PRICE_TIERS)
     cost_usd = (
         input_tokens * price_in
         + cache_creation * price_in * _CACHE_WRITE_MULT
-        + cache_read * price_in * _CACHE_READ_MULT
+        + cache_read * price_in * read_mult
         + output_tokens * price_out
     ) / 1_000_000
 
@@ -93,7 +103,7 @@ def estimate(model: str, usage: dict) -> dict:
     energy_wh = (
         input_tokens * energy_in
         + cache_creation * energy_in * _CACHE_WRITE_MULT
-        + cache_read * energy_in * _CACHE_READ_MULT
+        + cache_read * energy_in * read_mult
         + output_tokens * energy_out
     )
 

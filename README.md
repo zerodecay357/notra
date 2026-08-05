@@ -15,7 +15,7 @@ most likely to come up.
 | Python 3.10+ | runs the app | already have it |
 | `ffmpeg` | decodes the browser recording | `sudo apt install ffmpeg` |
 | a LaTeX engine | renders the PDF | **tectonic** (recommended): a single small binary from [tectonic-typesetting.github.io](https://tectonic-typesetting.github.io) — drop it in `bin/` or on PATH. It downloads only the packages it needs on first compile. Or TeX Live's `pdflatex` (`sudo apt install texlive-latex-extra texlive-fonts-recommended`, ~4 GB). |
-| Anthropic API key | Claude writes the notes | [console.anthropic.com](https://console.anthropic.com) |
+| an AI API key | writes the notes | **Claude** ([console.anthropic.com](https://console.anthropic.com), best quality) or **Gemini** ([aistudio.google.com/apikey](https://aistudio.google.com/apikey), has a free tier) — pick the provider in Settings |
 
 Transcription runs **locally and free** — no audio ever leaves your machine.
 Only the text transcript is sent to Claude.
@@ -79,7 +79,9 @@ a References section citing standard texts with chapter numbers.
 
 | Setting | Notes |
 |---|---|
+| AI provider | Claude (best notes) or Gemini (free tier — great for trying Notra without a card). |
 | Claude model | Opus 5 gives the best notes. Sonnet 5 is faster and cheaper. |
+| Gemini model | 2.5 Flash is fast with a generous free tier; 2.5 Pro is the quality option. |
 | Effort | `high` is the sweet spot; `xhigh` for dense technical lectures. |
 | Whisper model | `small` is the balance. `medium` is noticeably more accurate but ~3× slower on CPU. `tiny` for a quick draft. |
 | Spoken language | Leave on auto unless it's mis-detecting. |

@@ -1,29 +1,17 @@
-"""Turn a lecture transcript into exam-focused LaTeX notes with Claude."""
+"""Turn a lecture transcript into exam-focused LaTeX notes.
+
+Provider-agnostic: the prompt and message assembly live here, the actual API
+call is delegated to the backend selected by the AI_PROVIDER setting
+(app/providers/claude.py or app/providers/gemini.py).
+"""
 
 from __future__ import annotations
 
-import os
 import re
-import time
-from pathlib import Path
 from typing import Callable
 
-import anthropic
-
 from . import config
-
-MAX_TOKENS = 32000
-
-# Transient failures worth a retry: rate limits, connection hiccups, and the
-# provider's own 5xx — never retry a 400 (bad request) or auth error, those
-# won't fix themselves and would just burn more tokens for the same failure.
-_RETRYABLE = (
-    anthropic.RateLimitError,
-    anthropic.APIConnectionError,
-    anthropic.APITimeoutError,
-    anthropic.InternalServerError,
-)
-_MAX_ATTEMPTS = 3
+from .providers import claude, gemini
 
 SYSTEM_PROMPT = r"""You are an expert teaching assistant who turns raw lecture
 transcripts into the notes a strong student wishes they had taken. You write
@@ -107,35 +95,23 @@ single most important phrase in a passage. Standard LaTeX is fine: \textbf,
 - Be complete. These notes replace attending the lecture."""
 
 
-def _has_cli_profile() -> bool:
-    """True if `ant auth login` has stored a credential the SDK can pick up."""
-    root = Path(os.environ.get("ANTHROPIC_CONFIG_DIR", Path.home() / ".config" / "anthropic"))
-    creds = root / "credentials"
-    return creds.is_dir() and any(creds.glob("*.json"))
+_PROVIDERS = {"anthropic": claude, "gemini": gemini}
 
 
-def _client() -> anthropic.Anthropic:
-    api_key = config.get("ANTHROPIC_API_KEY")
-    if api_key:
-        return anthropic.Anthropic(api_key=api_key)
+def _provider():
+    return _PROVIDERS.get(config.get("AI_PROVIDER", "anthropic"), claude)
 
-    # No key of our own — let the SDK resolve credentials itself (env var,
-    # `ant auth login` profile, workload identity). It constructs happily with
-    # nothing at all, so check that something actually got resolved.
-    client = anthropic.Anthropic()
-    if client.api_key or getattr(client, "auth_token", None) or _has_cli_profile():
-        return client
 
-    raise RuntimeError(
-        "No Anthropic credentials found. Open Settings and paste your API key "
-        "(get one at console.anthropic.com)."
-    )
+def active_model() -> str:
+    """The model string the selected provider will be called with."""
+    if config.get("AI_PROVIDER", "anthropic") == "gemini":
+        return config.get("GEMINI_MODEL", "gemini-2.5-flash")
+    return config.get("CLAUDE_MODEL", "claude-opus-5")
 
 
 def credentials_available() -> bool:
     try:
-        _client()
-        return True
+        return _provider().credentials_available()
     except Exception:
         return False
 
@@ -172,94 +148,15 @@ def _build_user_message(meta: dict, transcript: str) -> str:
     )
 
 
-# Adaptive thinking and output_config.effort exist on these families only;
-# sending either to an older model is a 400.
-_MODERN_PREFIXES = (
-    "claude-opus-5", "claude-fable-5", "claude-mythos-5",
-    "claude-opus-4-8", "claude-opus-4-7", "claude-opus-4-6",
-    "claude-sonnet-5", "claude-sonnet-4-6",
-)
-
-
-def _supports_adaptive(model: str) -> bool:
-    return model.startswith(_MODERN_PREFIXES)
-
-
-def _usage_dict(usage) -> dict:
-    """Pull token counts out of an Anthropic Usage object; cache fields are
-    only present at all when prompt caching was actually exercised."""
-    return {
-        "input_tokens": getattr(usage, "input_tokens", 0) or 0,
-        "output_tokens": getattr(usage, "output_tokens", 0) or 0,
-        "cache_creation_tokens": getattr(usage, "cache_creation_input_tokens", 0) or 0,
-        "cache_read_tokens": getattr(usage, "cache_read_input_tokens", 0) or 0,
-    }
-
-
-def _stream_text(client, model: str, system: str, messages: list[dict],
-                 on_progress: Callable[[float], None] | None) -> tuple[str, dict]:
-    kwargs: dict = dict(
-        model=model,
-        max_tokens=MAX_TOKENS,
-        # The system prompt is identical on every call (every generate() and
-        # every repair(), for every lecture) — cache it so repeat calls pay
-        # cache-read price (roughly a tenth of input price) on these tokens
-        # instead of full price every time.
-        system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-        messages=messages,
-    )
-    if _supports_adaptive(model):
-        kwargs["thinking"] = {"type": "adaptive"}
-        kwargs["output_config"] = {"effort": config.get("CLAUDE_EFFORT", "high")}
-
-    attempt = 0
-    while True:
-        attempt += 1
-        chunks: list[str] = []
-        received = 0
-        try:
-            with client.messages.stream(**kwargs) as stream:
-                for text in stream.text_stream:
-                    chunks.append(text)
-                    received += len(text)
-                    if on_progress:
-                        # Typical notes land around 20k characters; ramp
-                        # asymptotically so the bar keeps moving without ever
-                        # claiming to be finished.
-                        on_progress(min(0.97, received / 22000))
-                final = stream.get_final_message()
-            break
-        except _RETRYABLE as exc:
-            if attempt >= _MAX_ATTEMPTS:
-                raise RuntimeError(
-                    f"Claude API kept failing after {attempt} attempts ({exc}). "
-                    "This is usually transient — try again in a minute."
-                ) from exc
-            time.sleep(2 ** attempt)  # 2s, 4s
-
-    if final.stop_reason == "refusal":
-        raise RuntimeError(
-            "Claude declined to generate notes for this recording. "
-            "Check that the audio is a lecture and try again."
-        )
-
-    body = "".join(chunks).strip()
-    if not body:
-        raise RuntimeError("Claude returned an empty response.")
-    return body, _usage_dict(final.usage)
-
-
 def generate(meta: dict, transcript: str,
              on_progress: Callable[[float], None] | None = None) -> tuple[str, str, dict]:
     """Return (latex_body, summary, usage)."""
     if not transcript.strip():
         raise RuntimeError("The transcript is empty — nothing was recognised in the audio.")
 
-    client = _client()
-    model = config.get("CLAUDE_MODEL", "claude-opus-5")
-    messages = [{"role": "user", "content": _build_user_message(meta, transcript)}]
-
-    body, usage = _stream_text(client, model, SYSTEM_PROMPT, messages, on_progress)
+    body, usage = _provider().stream(
+        SYSTEM_PROMPT, _build_user_message(meta, transcript), active_model(), on_progress
+    )
 
     summary = ""
     match = re.search(r"^%\s*SUMMARY:\s*(.+)$", body, re.MULTILINE)
@@ -271,20 +168,15 @@ def generate(meta: dict, transcript: str,
 
 def repair(meta: dict, broken_body: str, error_log: str) -> tuple[str, dict]:
     """One shot at fixing a body that failed to compile. Return (body, usage)."""
-    client = _client()
-    model = config.get("CLAUDE_MODEL", "claude-opus-5")
-
     prompt = (
-        "The LaTeX body below failed to compile with pdflatex. Fix it and return "
+        "The LaTeX body below failed to compile. Fix it and return "
         "the COMPLETE corrected body — same content, same structure, nothing "
         "dropped. Output only LaTeX, no explanation, no code fence.\n\n"
         "Common causes: an unescaped & % $ # _ { }, a Unicode symbol that should "
         "be a math macro, a missing \\end, or one boxed environment nested inside "
         "another.\n\n"
-        f"<pdflatex_errors>\n{error_log[:4000]}\n</pdflatex_errors>\n\n"
+        f"<latex_errors>\n{error_log[:4000]}\n</latex_errors>\n\n"
         f"<body>\n{broken_body}\n</body>"
     )
 
-    return _stream_text(
-        client, model, SYSTEM_PROMPT, [{"role": "user", "content": prompt}], None
-    )
+    return _provider().stream(SYSTEM_PROMPT, prompt, active_model(), None)

@@ -20,16 +20,19 @@ COURSES_DIR.mkdir(parents=True, exist_ok=True)
 
 # Keys we persist in .env, with their defaults.
 DEFAULTS: dict[str, str] = {
+    "AI_PROVIDER": "anthropic",  # anthropic | gemini
     "ANTHROPIC_API_KEY": "",
     "CLAUDE_MODEL": "claude-opus-5",
     "CLAUDE_EFFORT": "high",
+    "GEMINI_API_KEY": "",
+    "GEMINI_MODEL": "gemini-2.5-flash",
     "WHISPER_MODEL": "small",
     "WHISPER_COMPUTE": "int8",
     "WHISPER_LANGUAGE": "",  # empty = auto-detect
     "NOTES_STYLE": "detailed",  # detailed | concise
 }
 
-SECRET_KEYS = {"ANTHROPIC_API_KEY"}
+SECRET_KEYS = {"ANTHROPIC_API_KEY", "GEMINI_API_KEY"}
 
 _lock = threading.Lock()
 
