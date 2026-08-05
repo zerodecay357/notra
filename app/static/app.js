@@ -645,7 +645,7 @@ async function refreshHealth() {
   const badges = [
     ['API key', h.api_key],
     ['ffmpeg', h.ffmpeg],
-    ['pdflatex', h.pdflatex],
+    [h.latex_engine || 'latex', !!h.latex_engine],
     [h.whisper_model, true],
   ];
   for (const [label, ok] of badges) {

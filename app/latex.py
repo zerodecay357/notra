@@ -1,16 +1,23 @@
-"""LaTeX document assembly and pdflatex compilation.
+"""LaTeX document assembly and compilation.
 
 Claude only ever writes the *body*. The preamble below is fixed, so the visual
 identity of every set of notes is ours, not the model's — and the set of macros
 it may use is a closed, known-compiling vocabulary.
+
+Two engines are supported. **tectonic** is preferred: it's a single small
+binary that fetches only the LaTeX packages a document actually uses, which is
+what lets Notra ship to students without a ~4 GB TeX Live install. A system
+**pdflatex** is used as the fallback when tectonic isn't around (typical dev
+setup).
 """
 
 from __future__ import annotations
 
 import re
-import shutil
 import subprocess
 from pathlib import Path
+
+from . import binaries
 
 PREAMBLE = r"""\documentclass[11pt,a4paper]{article}
 
@@ -228,35 +235,71 @@ def build_document(meta: dict, body: str) -> str:
     )
 
 
+def engine() -> tuple[str, str] | None:
+    """(name, path) of the LaTeX engine to use — tectonic preferred — or None."""
+    for name in ("tectonic", "pdflatex"):
+        path = binaries.find(name)
+        if path:
+            return name, path
+    return None
+
+
+def engine_name() -> str:
+    """'tectonic', 'pdflatex', or '' when no engine is available."""
+    found = engine()
+    return found[0] if found else ""
+
+
 def pdflatex_available() -> bool:
-    return shutil.which("pdflatex") is not None
+    """Kept for compatibility: True when *any* LaTeX engine is available."""
+    return engine() is not None
+
+
+def _error_tail(log: str) -> str:
+    errors = [ln for ln in log.splitlines() if re.search(r"^(.*:\d+:|!|error[:\s])", ln, re.IGNORECASE)]
+    return "\n".join(errors[-25:]) or "\n".join(log.splitlines()[-40:])
 
 
 def compile_pdf(workdir: Path, tex_name: str = "notes.tex") -> tuple[bool, str]:
-    """Run pdflatex twice (for page refs). Returns (ok, log_tail)."""
-    if not pdflatex_available():
-        return False, "pdflatex is not installed. Install TeX Live to render PDFs."
+    """Compile tex_name in workdir. Returns (ok, log_tail)."""
+    found = engine()
+    if not found:
+        return False, (
+            "No LaTeX engine found. Install tectonic (recommended, single binary: "
+            "https://tectonic-typesetting.github.io) or TeX Live's pdflatex."
+        )
+    name, path = found
 
     pdf_path = workdir / tex_name.replace(".tex", ".pdf")
     if pdf_path.exists():
         pdf_path.unlink()
 
-    log = ""
-    for _ in range(2):
+    if name == "tectonic":
+        # Tectonic reruns passes itself and downloads missing packages on the
+        # fly — one invocation, but a generous timeout for that first fetch.
         proc = subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-file-line-error", tex_name],
+            [path, "--chatter", "minimal", tex_name],
             cwd=workdir,
             capture_output=True,
             text=True,
-            timeout=180,
+            timeout=600,
         )
-        log = proc.stdout or ""
-        if proc.returncode != 0:
-            break
+        log = (proc.stderr or "") + "\n" + (proc.stdout or "")
+    else:
+        # pdflatex needs a second pass for page references.
+        log = ""
+        for _ in range(2):
+            proc = subprocess.run(
+                [path, "-interaction=nonstopmode", "-halt-on-error", "-file-line-error", tex_name],
+                cwd=workdir,
+                capture_output=True,
+                text=True,
+                timeout=180,
+            )
+            log = proc.stdout or ""
+            if proc.returncode != 0:
+                break
 
     if pdf_path.exists() and pdf_path.stat().st_size > 0:
         return True, ""
-
-    errors = [ln for ln in log.splitlines() if re.search(r"^(.*:\d+:|!)", ln)]
-    tail = "\n".join(errors[-25:]) or "\n".join(log.splitlines()[-40:])
-    return False, tail
+    return False, _error_tail(log)

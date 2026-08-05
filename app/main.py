@@ -33,7 +33,8 @@ def health() -> dict:
     settings = config.load_settings()
     return {
         "ffmpeg": media.ffmpeg_available(),
-        "pdflatex": latex.pdflatex_available(),
+        "latex_engine": latex.engine_name(),  # 'tectonic' | 'pdflatex' | ''
+        "pdflatex": latex.pdflatex_available(),  # legacy: any engine present
         "api_key": notes.credentials_available(),
         "whisper_model": settings.get("WHISPER_MODEL"),
         "claude_model": settings.get("CLAUDE_MODEL"),

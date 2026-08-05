@@ -14,7 +14,7 @@ most likely to come up.
 |---|---|---|
 | Python 3.10+ | runs the app | already have it |
 | `ffmpeg` | decodes the browser recording | `sudo apt install ffmpeg` |
-| `pdflatex` | renders the PDF | `sudo apt install texlive-latex-extra texlive-fonts-recommended` |
+| a LaTeX engine | renders the PDF | **tectonic** (recommended): a single small binary from [tectonic-typesetting.github.io](https://tectonic-typesetting.github.io) — drop it in `bin/` or on PATH. It downloads only the packages it needs on first compile. Or TeX Live's `pdflatex` (`sudo apt install texlive-latex-extra texlive-fonts-recommended`, ~4 GB). |
 | Anthropic API key | Claude writes the notes | [console.anthropic.com](https://console.anthropic.com) |
 
 Transcription runs **locally and free** — no audio ever leaves your machine.
@@ -97,7 +97,8 @@ app/
   pipeline.py    the job: audio → transcript → LaTeX → PDF
   transcribe.py  faster-whisper wrapper
   notes.py       Claude prompt + streaming call + LaTeX repair pass
-  latex.py       document preamble, sanitising, pdflatex
+  latex.py       document preamble, sanitising, tectonic/pdflatex
+  binaries.py    finds bundled (bin/) or system executables
   db.py          SQLite
   courses.py     folder-based course database
   static/        the web UI
@@ -115,8 +116,9 @@ audio, re-share and tick "Share tab audio".
 **LaTeX failed to compile** — Notra automatically sends the error back to Claude
 once for a repair pass. If it still fails, the errors are shown in the app and
 the broken source is kept at `data/lectures/<id>/notes.tex` so you can fix it by
-hand. Missing `.sty` files are usually fixed by
-`sudo apt install texlive-latex-extra`.
+hand. With tectonic, missing packages are fetched automatically (it needs
+internet on first compile); with pdflatex, missing `.sty` files are usually
+fixed by `sudo apt install texlive-latex-extra`.
 
 **Notes are thin or wrong** — check the Transcript tab first. If the transcript
 is garbled, switch Whisper to `medium` and regenerate. If the transcript is good
