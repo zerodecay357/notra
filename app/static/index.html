@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F6F1E6">
+<title>Notra — Lectures, typeset</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<div class="app">
+
+  <!-- ─────────────────────────── Sidebar ─────────────────────────── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-name">Notra<span class="red">.</span></div>
+      <div class="brand-sub">lectures, typeset</div>
+    </div>
+
+    <nav class="side-nav">
+      <button id="navHome" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6h-6v6H3z"/></svg>
+        Home
+      </button>
+      <button id="newRecordingBtn" class="btn btn-ink btn-block">
+        <span class="dot-rec"></span> New recording
+      </button>
+    </nav>
+
+    <div class="lib-head">
+      <span>Contents</span>
+      <span id="libCount" class="pill">0</span>
+    </div>
+    <div id="lectureList" class="lecture-list"></div>
+
+    <div class="sidebar-foot">
+      <button id="settingsBtn" class="btn btn-ghost btn-block">Settings</button>
+      <div id="healthStrip" class="health"></div>
+    </div>
+  </aside>
+
+  <!-- ─────────────────────────── Main ─────────────────────────── -->
+  <main class="main">
+
+    <!-- ═══════════════════ Home / landing view ═══════════════════ -->
+    <section id="homeView" class="view view-home">
+
+      <div class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow reveal">record&nbsp;&nbsp;·&nbsp;&nbsp;transcribe&nbsp;&nbsp;·&nbsp;&nbsp;typeset</span>
+          <h1 class="reveal d1">Every lecture,<br><em>properly&nbsp;typeset<span class="red">.</span></em></h1>
+          <svg class="hero-flourish reveal d2" viewBox="0 0 220 12" aria-hidden="true">
+            <path d="M3 8 C 40 3, 90 10, 130 6 S 200 4, 217 7" fill="none"/>
+          </svg>
+          <p class="hero-sub reveal d2">
+            Record the class — or drop in the audio afterwards. Notra transcribes it
+            privately on your own machine, then Claude writes structured LaTeX notes
+            and compiles a real PDF: definitions, theorems, derivations, and a ranked
+            <em>Exam&nbsp;Focus</em> list you can actually revise from.
+          </p>
+          <div class="hero-actions reveal d3">
+            <button id="heroStartBtn" class="btn btn-ink btn-lg"><span class="dot-rec"></span> Start recording</button>
+            <a href="#how" class="btn btn-ghost btn-lg">How it works</a>
+          </div>
+          <div class="hero-stamps reveal d4">
+            <span class="stamp">runs locally</span>
+            <span class="stamp">real LaTeX</span>
+            <span class="stamp">tab-audio capture</span>
+          </div>
+        </div>
+
+        <!-- Ink-drawn illustration: mic → open notebook -->
+        <div class="hero-art reveal d2" aria-hidden="true">
+          <svg viewBox="0 0 520 440" fill="none">
+            <!-- coffee ring -->
+            <circle cx="430" cy="72" r="34" stroke="#B08968" stroke-width="7" opacity=".18"/>
+            <circle cx="430" cy="72" r="27" stroke="#B08968" stroke-width="2" opacity=".14"/>
+
+            <!-- sound arcs from the mic -->
+            <g class="art-arcs" stroke="#1C1B18" stroke-width="2.5" stroke-linecap="round">
+              <path d="M148 118 a34 34 0 0 1 0 48" opacity=".85"/>
+              <path d="M162 104 a54 54 0 0 1 0 76" opacity=".55"/>
+              <path d="M176 90 a74 74 0 0 1 0 104" opacity=".3"/>
+            </g>
+
+            <!-- microphone doodle -->
+            <g class="art-mic" stroke="#1C1B18" stroke-width="2.5" stroke-linecap="round">
+              <rect x="96" y="96" width="34" height="58" rx="17" fill="#FFFDF6"/>
+              <path d="M86 136 a27 27 0 0 0 54 0"/>
+              <line x1="113" y1="163" x2="113" y2="182"/>
+              <line x1="99" y1="182" x2="127" y2="182"/>
+              <line x1="104" y1="112" x2="122" y2="112" opacity=".45"/>
+              <line x1="104" y1="122" x2="122" y2="122" opacity=".45"/>
+              <line x1="104" y1="132" x2="122" y2="132" opacity=".45"/>
+            </g>
+
+            <!-- dashed flight path: mic → page -->
+            <path class="art-path" d="M150 200 C 190 260, 210 260, 258 246"
+                  stroke="#C2472E" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round"/>
+            <path d="M251 240 l10 5 -11 4 z" fill="#C2472E"/>
+
+            <!-- open notebook -->
+            <g class="art-book">
+              <!-- page shadow -->
+              <ellipse cx="330" cy="398" rx="170" ry="12" fill="#1C1B18" opacity=".07"/>
+              <!-- left page -->
+              <path d="M180 232 C 230 218, 300 218, 328 228 L 328 386 C 300 376, 230 376, 180 390 Z"
+                    fill="#FFFDF6" stroke="#1C1B18" stroke-width="2.5" stroke-linejoin="round"/>
+              <!-- right page -->
+              <path d="M328 228 C 356 218, 426 218, 476 232 L 476 390 C 426 376, 356 376, 328 386 Z"
+                    fill="#FFFDF6" stroke="#1C1B18" stroke-width="2.5" stroke-linejoin="round"/>
+              <!-- spine -->
+              <path d="M328 228 L 328 386" stroke="#1C1B18" stroke-width="2.5"/>
+
+              <!-- left page: title + rules + integral -->
+              <path d="M196 252 C 230 244, 280 243, 312 248" stroke="#1C1B18" stroke-width="3" stroke-linecap="round"/>
+              <g stroke="#9DB8CE" stroke-width="1.6" stroke-linecap="round" opacity=".8">
+                <path d="M196 270 C 230 262, 280 261, 312 266"/>
+                <path d="M196 286 C 230 278, 280 277, 312 282"/>
+                <path d="M196 302 C 230 294, 280 293, 312 298"/>
+                <path d="M196 350 C 230 342, 280 341, 312 346"/>
+              </g>
+              <text x="222" y="336" font-family="Fraunces, Georgia, serif" font-style="italic"
+                    font-size="26" fill="#1C1B18">∫ f&thinsp;dx</text>
+
+              <!-- right page: exam box + rules + sigma -->
+              <g stroke="#9DB8CE" stroke-width="1.6" stroke-linecap="round" opacity=".8">
+                <path d="M344 250 C 380 244, 430 245, 462 252"/>
+                <path d="M344 266 C 380 260, 430 261, 462 268"/>
+              </g>
+              <rect x="344" y="282" width="118" height="52" rx="4" fill="#FBEFEA"
+                    stroke="#C2472E" stroke-width="2"/>
+              <text x="354" y="300" font-family="IBM Plex Mono, monospace" font-size="10"
+                    letter-spacing="1.5" fill="#C2472E">EXAM FOCUS</text>
+              <g stroke="#C2472E" stroke-width="1.6" stroke-linecap="round" opacity=".55">
+                <path d="M354 312 h 96"/>
+                <path d="M354 322 h 74"/>
+              </g>
+              <text x="356" y="368" font-family="Fraunces, Georgia, serif" font-style="italic"
+                    font-size="24" fill="#1C1B18">Σ&thinsp;aₙ</text>
+            </g>
+
+            <!-- red pen -->
+            <g class="art-pen" stroke="#1C1B18" stroke-width="2" stroke-linejoin="round">
+              <path d="M398 404 L 470 384 L 480 390 L 410 412 Z" fill="#C2472E"/>
+              <path d="M398 404 L 388 410 L 396 412 Z" fill="#1C1B18"/>
+            </g>
+
+            <!-- margin asterisks -->
+            <text x="60" y="280" font-family="Fraunces, Georgia, serif" font-size="26" fill="#C2472E" opacity=".8">*</text>
+            <text x="482" y="180" font-family="Fraunces, Georgia, serif" font-size="20" fill="#1C1B18" opacity=".35">*</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div id="how" class="how">
+        <h2 class="section-title reveal">From lecture hall to PDF, <em>in three steps</em></h2>
+        <div class="how-grid">
+          <div class="how-col reveal">
+            <span class="how-num">1<span class="red">.</span></span>
+            <h3>Record or upload</h3>
+            <p>Capture the mic, the tab audio of an online lecture, or both at once —
+               or just drop in a voice file from your phone.</p>
+            <span class="foot-tag">mic · system · file</span>
+          </div>
+          <div class="how-col reveal d1">
+            <span class="how-num">2<span class="red">.</span></span>
+            <h3>Private transcription</h3>
+            <p>Whisper runs on your own CPU — the audio never leaves your machine.
+               Silence and noise are skipped automatically.</p>
+            <span class="foot-tag">local whisper</span>
+          </div>
+          <div class="how-col reveal d2">
+            <span class="how-num">3<span class="red">.</span></span>
+            <h3>Claude typesets</h3>
+            <p>The transcript becomes structured LaTeX — definitions, theorems,
+               worked examples — compiled into a printable PDF.</p>
+            <span class="foot-tag">LaTeX → PDF</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature cards -->
+      <div class="feat-grid">
+        <div class="paper-card reveal">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 1 4 4v5a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4Zm7 9a7 7 0 0 1-14 0M12 19v3"/></svg>
+          </div>
+          <h3>Made for real lectures</h3>
+          <p>Pause and resume freely, watch the live waveform, and capture tab audio
+             for online classes. A crash costs seconds, not the lecture.</p>
+        </div>
+        <div class="paper-card reveal d1">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 3l8 4v6c0 4.4-3.2 7.4-8 8-4.8-.6-8-3.6-8-8V7l8-4Zm0 5v8m-3-5 3 3 3-3"/></svg>
+          </div>
+          <h3>Private by design</h3>
+          <p>Transcription is fully local. Only the finished text transcript is sent
+             to Claude, with your own key — nothing else, nowhere else.</p>
+        </div>
+        <div class="paper-card reveal d2">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6V2Zm9 0v5h5M9 13h8M9 17h6M9 9h3"/></svg>
+          </div>
+          <h3>Notes worth revising</h3>
+          <p>Not a wall of transcript — sections, boxed definitions, clean math,
+             the questions asked in class, and a ranked exam-focus list.</p>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-card reveal">
+        <div>
+          <h2>Ready for your next lecture<span class="red">?</span></h2>
+          <p>Set your API key once in Settings, then just hit record.</p>
+        </div>
+        <button id="ctaStartBtn" class="btn btn-ink btn-lg">Open the recorder</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ Recorder view ═══════════════════ -->
+    <section id="recordView" class="view hidden">
+      <header class="view-head">
+        <h1>New <em>recording</em></h1>
+        <p class="muted">Hit record when the lecture starts — pause any time. When you stop,
+           Notra transcribes locally and Claude writes the notes. Or skip recording and
+           upload an audio file below.</p>
+      </header>
+
+      <div class="card recorder">
+        <div class="recorder-visual">
+          <canvas id="waveform"></canvas>
+          <div class="recorder-overlay">
+            <div id="timer" class="timer">00:00</div>
+            <div id="recStatus" class="rec-status">Ready</div>
+          </div>
+        </div>
+
+        <div class="recorder-controls">
+          <button id="recordBtn" class="btn-record" title="Start recording">
+            <span class="rec-icon"></span>
+          </button>
+          <button id="pauseBtn" class="btn btn-ghost" disabled>Pause</button>
+          <button id="stopBtn" class="btn btn-danger" disabled>Stop &amp; generate</button>
+
+          <div class="spacer"></div>
+
+          <label class="field inline">
+            <span>Audio source</span>
+            <select id="sourceSelect">
+              <option value="mic">Microphone</option>
+              <option value="system">System audio (online lecture)</option>
+              <option value="both">Microphone + system audio</option>
+            </select>
+          </label>
+        </div>
+        <div id="recHint" class="hint"></div>
+      </div>
+
+      <!-- Upload a file instead -->
+      <div class="card">
+        <h2 class="card-title">Or upload a voice file</h2>
+        <p class="muted small">Already have the lecture on your phone or as a download?
+           Drop it here — mp3, m4a, wav, ogg, webm and most others work.</p>
+        <div id="dropZone" class="drop-zone">
+          <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0 5 5m-5-5L7 9M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <span><strong>Drop an audio file</strong> or <button id="browseBtn" class="link-btn" type="button">browse</button></span>
+          <input id="fileInput" type="file" accept="audio/*,video/mp4,video/webm,.m4a,.mp3,.wav,.ogg,.opus,.aac,.flac" hidden>
+        </div>
+        <div id="fileChip" class="file-chip hidden">
+          <svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v11M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm10-3a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+          <span id="fileChipName"></span>
+          <button id="fileChipRemove" title="Remove file">✕</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Lecture details</h2>
+        <p class="muted small">These become the title block of your PDF and steer how
+           Claude writes the notes.</p>
+        <div class="form-grid">
+          <label class="field">
+            <span>Course <em>*</em></span>
+            <select id="fCourse">
+              <option value="">Select a course…</option>
+              <option value="__new__">＋ New course…</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Date <em>*</em></span>
+            <input id="fDate" type="date">
+          </label>
+          <label class="field span2 hidden" id="newCourseField">
+            <span>New course name <em>*</em></span>
+            <input id="fNewCourse" type="text" placeholder="e.g. COL106 Data Structures">
+          </label>
+          <label class="field span2">
+            <span>Lecture topic <em>*</em></span>
+            <input id="fTopic" type="text" placeholder="e.g. Balanced binary search trees">
+          </label>
+          <label class="field span2">
+            <span>Instructor <small>(optional)</small></span>
+            <input id="fInstructor" type="text" placeholder="e.g. Prof. A. Sharma">
+          </label>
+          <label class="field span2">
+            <span>Extra instructions for Claude <small>(optional)</small></span>
+            <textarea id="fExtra" rows="2"
+              placeholder="e.g. Emphasise proofs; we have a quiz on this next week."></textarea>
+          </label>
+        </div>
+      </div>
+
+      <div id="uploadStatus" class="upload-status"></div>
+    </section>
+
+    <!-- ═══════════════════ Lecture detail view ═══════════════════ -->
+    <section id="lectureView" class="view hidden">
+      <header class="view-head lecture-head">
+        <div>
+          <h1 id="lecTopic">—</h1>
+          <p id="lecMeta" class="muted"></p>
+        </div>
+        <div class="head-actions">
+          <span id="lecStatus" class="status-badge"></span>
+          <button id="regenBtn" class="btn btn-ghost">Regenerate</button>
+          <button id="deleteBtn" class="btn btn-ghost danger">Delete</button>
+        </div>
+      </header>
+
+      <div id="progressCard" class="card progress-card hidden">
+        <div class="steps" id="steps"></div>
+        <div class="bar"><div id="barFill" class="bar-fill"></div></div>
+        <div id="progressLabel" class="muted small"></div>
+      </div>
+
+      <div id="errorCard" class="card error-card hidden">
+        <h2 class="card-title">Something went wrong</h2>
+        <pre id="errorText"></pre>
+        <button id="retryBtn" class="btn btn-ink">Try again</button>
+      </div>
+
+      <div id="resultCard" class="folder hidden">
+        <div class="tabs">
+          <button class="tab active" data-tab="pdf">Notes PDF</button>
+          <button class="tab" data-tab="transcript">Transcript</button>
+          <div class="spacer"></div>
+          <a id="dlPdf" class="btn btn-ink" href="#">Download PDF</a>
+          <a id="dlTex" class="btn btn-ghost" href="#">.tex</a>
+        </div>
+        <div class="folder-body">
+          <div id="impactStrip" class="impact-strip hidden">
+            <span class="impact-item"><span id="impCost"></span></span>
+            <span class="impact-sep">·</span>
+            <span class="impact-item"><span id="impEnergy"></span></span>
+            <span class="impact-sep">·</span>
+            <span class="impact-item"><span id="impCo2"></span></span>
+            <span id="impEquiv" class="impact-equiv"></span>
+            <span class="impact-info" tabindex="0"
+              title="Anthropic doesn't publish per-token energy or carbon figures. This is a rough, order-of-magnitude estimate from public research on LLM inference energy use and the global average grid carbon intensity (~480 g CO₂/kWh) — illustrative, not measured.">ⓘ</span>
+          </div>
+          <div id="tabPdf" class="tab-panel">
+            <iframe id="pdfFrame" title="Lecture notes PDF"></iframe>
+          </div>
+          <div id="tabTranscript" class="tab-panel hidden">
+            <audio id="audioPlayer" controls></audio>
+            <pre id="transcriptText" class="transcript"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ─────────────────────────── Settings modal ─────────────────────────── -->
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>Settings</h2>
+
+    <label class="field">
+      <span>Anthropic API key <span id="keyStatus" class="key-chip"></span></span>
+      <input id="sKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+      <small id="keyHint" class="muted"></small>
+    </label>
+
+    <label class="field">
+      <span>Claude model</span>
+      <select id="sModel">
+        <option value="claude-opus-5">Claude Opus 5 — best notes</option>
+        <option value="claude-sonnet-5">Claude Sonnet 5 — faster, cheaper</option>
+        <option value="claude-haiku-4-5">Claude Haiku 4.5 — fastest</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Effort</span>
+      <select id="sEffort">
+        <option value="high">High — recommended</option>
+        <option value="xhigh">Extra high — most thorough</option>
+        <option value="medium">Medium — cheaper</option>
+        <option value="low">Low — quickest</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Whisper model <small>(local transcription, runs on CPU)</small></span>
+      <select id="sWhisper">
+        <option value="tiny">tiny — fastest, roughest</option>
+        <option value="small">small — recommended balance</option>
+        <option value="medium">medium — most accurate, ~3× slower</option>
+      </select>
+    </label>
+
+    <div class="form-grid">
+      <label class="field">
+        <span>Spoken language</span>
+        <select id="sLang">
+          <option value="">Auto-detect</option>
+          <option value="en">English</option>
+          <option value="hi">Hindi</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="zh">Chinese</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Notes style</span>
+        <select id="sStyle">
+          <option value="detailed">Detailed</option>
+          <option value="concise">Concise</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button id="settingsCancel" class="btn btn-ghost">Cancel</button>
+      <button id="settingsSave" class="btn btn-ink">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

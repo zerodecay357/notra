@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Secrets — your Anthropic API key lives here
+.env
+
+# Runtime data: recordings, transcripts, generated PDFs
+data/
+
+# Model caches
+.cache/
+*.log
+.DS_Store
