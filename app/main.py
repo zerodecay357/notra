@@ -33,10 +33,11 @@ def health() -> dict:
     settings = config.load_settings()
     return {
         "ffmpeg": media.ffmpeg_available(),
-        "pdflatex": latex.pdflatex_available(),
+        "latex_engine": latex.engine_name(),  # 'tectonic' | 'pdflatex' | ''
+        "pdflatex": latex.pdflatex_available(),  # legacy: any engine present
         "api_key": notes.credentials_available(),
         "whisper_model": settings.get("WHISPER_MODEL"),
-        "claude_model": settings.get("CLAUDE_MODEL"),
+        "claude_model": notes.active_model(),  # active provider's model
     }
 
 
@@ -46,9 +47,14 @@ def health() -> dict:
 def get_settings() -> dict:
     settings = config.load_settings()
     out = dict(settings)
-    key = settings.get("ANTHROPIC_API_KEY", "")
-    out["ANTHROPIC_API_KEY"] = f"…{key[-4:]}" if key else ""
-    out["api_key_set"] = bool(key)
+    for key_name, flag in (("ANTHROPIC_API_KEY", "anthropic_key_set"),
+                           ("GEMINI_API_KEY", "gemini_key_set")):
+        key = settings.get(key_name, "")
+        out[key_name] = f"…{key[-4:]}" if key else ""
+        out[flag] = bool(key)
+    # Legacy field: does the *active* provider have credentials?
+    out["api_key_set"] = out["gemini_key_set"] if settings.get("AI_PROVIDER") == "gemini" \
+        else out["anthropic_key_set"]
     return out
 
 
@@ -56,8 +62,9 @@ def get_settings() -> dict:
 async def post_settings(payload: dict) -> dict:
     updates = {k: v for k, v in payload.items() if k in config.DEFAULTS}
     # An empty key field means "leave it alone", not "erase it".
-    if not str(updates.get("ANTHROPIC_API_KEY", "")).strip():
-        updates.pop("ANTHROPIC_API_KEY", None)
+    for secret in config.SECRET_KEYS:
+        if not str(updates.get(secret, "")).strip():
+            updates.pop(secret, None)
     config.save_settings(updates)
     return get_settings()
 

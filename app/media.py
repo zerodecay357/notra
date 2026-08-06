@@ -1,10 +1,11 @@
-"""Audio normalisation via ffmpeg."""
+"""Audio normalisation via ffmpeg (bundled copy in bin/ preferred)."""
 
 from __future__ import annotations
 
-import shutil
 import subprocess
 from pathlib import Path
+
+from . import binaries
 
 SAMPLE_RATE = 16000
 
@@ -14,15 +15,16 @@ class MediaError(RuntimeError):
 
 
 def ffmpeg_available() -> bool:
-    return shutil.which("ffmpeg") is not None
+    return binaries.find("ffmpeg") is not None
 
 
 def to_wav(src: Path, dest: Path) -> Path:
     """Convert any container the browser produced into 16 kHz mono PCM."""
-    if not ffmpeg_available():
+    ffmpeg = binaries.find("ffmpeg")
+    if not ffmpeg:
         raise MediaError("ffmpeg is not installed or not on PATH.")
     cmd = [
-        "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+        ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
         "-i", str(src),
         "-vn",
         "-ac", "1",

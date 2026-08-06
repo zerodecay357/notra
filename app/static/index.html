@@ -385,29 +385,55 @@
     <h2>Settings</h2>
 
     <label class="field">
-      <span>Anthropic API key <span id="keyStatus" class="key-chip"></span></span>
-      <input id="sKey" type="password" placeholder="sk-ant-…" autocomplete="off">
-      <small id="keyHint" class="muted"></small>
-    </label>
-
-    <label class="field">
-      <span>Claude model</span>
-      <select id="sModel">
-        <option value="claude-opus-5">Claude Opus 5 — best notes</option>
-        <option value="claude-sonnet-5">Claude Sonnet 5 — faster, cheaper</option>
-        <option value="claude-haiku-4-5">Claude Haiku 4.5 — fastest</option>
+      <span>AI provider</span>
+      <select id="sProvider">
+        <option value="anthropic">Claude (Anthropic) — best notes</option>
+        <option value="gemini">Gemini (Google) — has a free tier</option>
       </select>
     </label>
 
-    <label class="field">
-      <span>Effort</span>
-      <select id="sEffort">
-        <option value="high">High — recommended</option>
-        <option value="xhigh">Extra high — most thorough</option>
-        <option value="medium">Medium — cheaper</option>
-        <option value="low">Low — quickest</option>
-      </select>
-    </label>
+    <div id="anthropicFields" class="provider-fields">
+      <label class="field">
+        <span>Anthropic API key <span id="keyStatus" class="key-chip"></span></span>
+        <input id="sKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+        <small id="keyHint" class="muted"></small>
+      </label>
+
+      <label class="field">
+        <span>Claude model</span>
+        <select id="sModel">
+          <option value="claude-opus-5">Claude Opus 5 — best notes</option>
+          <option value="claude-sonnet-5">Claude Sonnet 5 — faster, cheaper</option>
+          <option value="claude-haiku-4-5">Claude Haiku 4.5 — fastest</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Effort</span>
+        <select id="sEffort">
+          <option value="high">High — recommended</option>
+          <option value="xhigh">Extra high — most thorough</option>
+          <option value="medium">Medium — cheaper</option>
+          <option value="low">Low — quickest</option>
+        </select>
+      </label>
+    </div>
+
+    <div id="geminiFields" class="provider-fields hidden">
+      <label class="field">
+        <span>Gemini API key <span id="geminiKeyStatus" class="key-chip"></span></span>
+        <input id="sGeminiKey" type="password" placeholder="AIza…" autocomplete="off">
+        <small id="geminiKeyHint" class="muted"></small>
+      </label>
+
+      <label class="field">
+        <span>Gemini model</span>
+        <select id="sGeminiModel">
+          <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast, generous free tier</option>
+          <option value="gemini-2.5-pro">Gemini 2.5 Pro — best quality</option>
+        </select>
+      </label>
+    </div>
 
     <label class="field">
       <span>Whisper model <small>(local transcription, runs on CPU)</small></span>

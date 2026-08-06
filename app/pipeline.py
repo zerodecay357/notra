@@ -88,7 +88,7 @@ def _render(lecture_id: str, meta: dict, body: str) -> None:
             fixed, repair_usage = notes.repair(meta, latex.sanitize_body(body), log)
         except Exception as exc:  # repair itself failed
             raise RuntimeError(f"LaTeX failed to compile and could not be repaired: {exc}\n\n{log}")
-        _record_usage(lecture_id, config.get("CLAUDE_MODEL"), repair_usage)
+        _record_usage(lecture_id, notes.active_model(), repair_usage)
 
         (workdir / "notes.tex").write_text(latex.build_document(meta, fixed), encoding="utf-8")
         ok, log2 = latex.compile_pdf(workdir)
@@ -147,7 +147,7 @@ def _run(lecture_id: str, source_path: Path) -> None:
         _advance(lecture_id, "writing", 0.0)
         meta = db.get(lecture_id) or {}
         meta["duration_sec"] = duration
-        model = config.get("CLAUDE_MODEL")
+        model = notes.active_model()
         _reset_usage(lecture_id)
         body, summary, usage = notes.generate(
             meta, timestamped, lambda f: _advance(lecture_id, "writing", f)
@@ -183,7 +183,7 @@ def _run_notes_only(lecture_id: str) -> None:
         )
 
         _advance(lecture_id, "writing", 0.0)
-        model = config.get("CLAUDE_MODEL")
+        model = notes.active_model()
         _reset_usage(lecture_id)
         body, summary, usage = notes.generate(
             meta, timestamped, lambda f: _advance(lecture_id, "writing", f)

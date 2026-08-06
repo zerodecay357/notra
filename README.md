@@ -14,8 +14,8 @@ most likely to come up.
 |---|---|---|
 | Python 3.10+ | runs the app | already have it |
 | `ffmpeg` | decodes the browser recording | `sudo apt install ffmpeg` |
-| `pdflatex` | renders the PDF | `sudo apt install texlive-latex-extra texlive-fonts-recommended` |
-| Anthropic API key | Claude writes the notes | [console.anthropic.com](https://console.anthropic.com) |
+| a LaTeX engine | renders the PDF | **tectonic** (recommended): a single small binary from [tectonic-typesetting.github.io](https://tectonic-typesetting.github.io) — drop it in `bin/` or on PATH. It downloads only the packages it needs on first compile. Or TeX Live's `pdflatex` (`sudo apt install texlive-latex-extra texlive-fonts-recommended`, ~4 GB). |
+| an AI API key | writes the notes | **Claude** ([console.anthropic.com](https://console.anthropic.com), best quality) or **Gemini** ([aistudio.google.com/apikey](https://aistudio.google.com/apikey), has a free tier) — pick the provider in Settings |
 
 Transcription runs **locally and free** — no audio ever leaves your machine.
 Only the text transcript is sent to Claude.
@@ -79,7 +79,9 @@ a References section citing standard texts with chapter numbers.
 
 | Setting | Notes |
 |---|---|
+| AI provider | Claude (best notes) or Gemini (free tier — great for trying Notra without a card). |
 | Claude model | Opus 5 gives the best notes. Sonnet 5 is faster and cheaper. |
+| Gemini model | 2.5 Flash is fast with a generous free tier; 2.5 Pro is the quality option. |
 | Effort | `high` is the sweet spot; `xhigh` for dense technical lectures. |
 | Whisper model | `small` is the balance. `medium` is noticeably more accurate but ~3× slower on CPU. `tiny` for a quick draft. |
 | Spoken language | Leave on auto unless it's mis-detecting. |
@@ -97,7 +99,8 @@ app/
   pipeline.py    the job: audio → transcript → LaTeX → PDF
   transcribe.py  faster-whisper wrapper
   notes.py       Claude prompt + streaming call + LaTeX repair pass
-  latex.py       document preamble, sanitising, pdflatex
+  latex.py       document preamble, sanitising, tectonic/pdflatex
+  binaries.py    finds bundled (bin/) or system executables
   db.py          SQLite
   courses.py     folder-based course database
   static/        the web UI
@@ -115,8 +118,9 @@ audio, re-share and tick "Share tab audio".
 **LaTeX failed to compile** — Notra automatically sends the error back to Claude
 once for a repair pass. If it still fails, the errors are shown in the app and
 the broken source is kept at `data/lectures/<id>/notes.tex` so you can fix it by
-hand. Missing `.sty` files are usually fixed by
-`sudo apt install texlive-latex-extra`.
+hand. With tectonic, missing packages are fetched automatically (it needs
+internet on first compile); with pdflatex, missing `.sty` files are usually
+fixed by `sudo apt install texlive-latex-extra`.
 
 **Notes are thin or wrong** — check the Transcript tab first. If the transcript
 is garbled, switch Whisper to `medium` and regenerate. If the transcript is good

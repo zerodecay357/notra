@@ -593,18 +593,37 @@ function switchTab(name) {
 
 /* ═════════════════════════════ settings ═════════════════════════════ */
 
+function toggleProviderFields() {
+  const isGemini = $('sProvider').value === 'gemini';
+  $('anthropicFields').classList.toggle('hidden', isGemini);
+  $('geminiFields').classList.toggle('hidden', !isGemini);
+}
+
 async function openSettings() {
   try {
     const s = await api('/api/settings');
+    $('sProvider').value = s.AI_PROVIDER || 'anthropic';
+    toggleProviderFields();
+
     $('sKey').value = '';
     const chip = $('keyStatus');
-    chip.className = 'key-chip ' + (s.api_key_set ? 'ok' : 'none');
-    chip.textContent = s.api_key_set ? 'Key active' : 'No key set';
-    $('keyHint').textContent = s.api_key_set
+    chip.className = 'key-chip ' + (s.anthropic_key_set ? 'ok' : 'none');
+    chip.textContent = s.anthropic_key_set ? 'Key active' : 'No key set';
+    $('keyHint').textContent = s.anthropic_key_set
       ? `A key is saved (ends ${s.ANTHROPIC_API_KEY}). Leave blank to keep it.`
       : 'Required. Get one at console.anthropic.com — stored locally in .env.';
+
+    $('sGeminiKey').value = '';
+    const gchip = $('geminiKeyStatus');
+    gchip.className = 'key-chip ' + (s.gemini_key_set ? 'ok' : 'none');
+    gchip.textContent = s.gemini_key_set ? 'Key active' : 'No key set';
+    $('geminiKeyHint').textContent = s.gemini_key_set
+      ? `A key is saved (ends ${s.GEMINI_API_KEY}). Leave blank to keep it.`
+      : 'Free keys at aistudio.google.com/apikey — stored locally in .env.';
+
     $('sModel').value = s.CLAUDE_MODEL;
     $('sEffort').value = s.CLAUDE_EFFORT;
+    $('sGeminiModel').value = s.GEMINI_MODEL || 'gemini-2.5-flash';
     $('sWhisper').value = s.WHISPER_MODEL;
     $('sLang').value = s.WHISPER_LANGUAGE || '';
     $('sStyle').value = s.NOTES_STYLE;
@@ -616,9 +635,12 @@ async function openSettings() {
 
 async function saveSettings() {
   const payload = {
+    AI_PROVIDER: $('sProvider').value,
     ANTHROPIC_API_KEY: $('sKey').value.trim(),
     CLAUDE_MODEL: $('sModel').value,
     CLAUDE_EFFORT: $('sEffort').value,
+    GEMINI_API_KEY: $('sGeminiKey').value.trim(),
+    GEMINI_MODEL: $('sGeminiModel').value,
     WHISPER_MODEL: $('sWhisper').value,
     WHISPER_LANGUAGE: $('sLang').value,
     NOTES_STYLE: $('sStyle').value,
@@ -645,7 +667,7 @@ async function refreshHealth() {
   const badges = [
     ['API key', h.api_key],
     ['ffmpeg', h.ffmpeg],
-    ['pdflatex', h.pdflatex],
+    [h.latex_engine || 'latex', !!h.latex_engine],
     [h.whisper_model, true],
   ];
   for (const [label, ok] of badges) {
@@ -687,6 +709,7 @@ $('fileChipRemove').onclick = () => {
   $('uploadStatus').textContent = '';
   $('uploadStatus').className = 'upload-status';
 };
+$('sProvider').onchange = toggleProviderFields;
 $('settingsCancel').onclick = () => $('settingsModal').classList.add('hidden');
 $('settingsSave').onclick = saveSettings;
 $('settingsModal').onclick = (e) => {

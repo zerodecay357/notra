@@ -15,3 +15,9 @@ data/
 .cache/
 *.log
 .DS_Store
+
+# Claude Code local settings
+.claude/settings.local.json*
+
+# Bundled binaries (tectonic, ffmpeg) — fetched at package time, not committed
+bin/

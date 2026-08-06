@@ -648,6 +648,7 @@ select { cursor: pointer; }
   letter-spacing: -0.02em;
 }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+.provider-fields { display: flex; flex-direction: column; gap: 16px; }
 
 .key-chip {
   font-size: 9.5px; padding: 2px 8px; border-radius: 3px; border: 1px solid;
