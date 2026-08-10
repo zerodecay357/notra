@@ -60,7 +60,7 @@ def main() -> int:
     # Imported lazily: only needed for the desktop build, not run.sh/tests.
     from PySide6.QtCore import QUrl
     from PySide6.QtGui import QCloseEvent, QDesktopServices
-    from PySide6.QtWebEngineCore import QWebEnginePage
+    from PySide6.QtWebEngineCore import QWebEnginePage, QWebEnginePermission
     from PySide6.QtWebEngineWidgets import QWebEngineView
     from PySide6.QtWidgets import QApplication, QMainWindow
 
@@ -101,8 +101,33 @@ def main() -> int:
             )
             return popup
 
+    # Capturing audio needs an explicit answer here. A browser would show its
+    # own "Allow microphone?" prompt; an embedded view has none, so an
+    # unanswered request simply hangs and the record button looks dead.
+    # Notra exists to record, and the page is our own local UI, so the
+    # capture permissions are granted outright.
+    _ALLOWED = {
+        QWebEnginePermission.PermissionType.MediaAudioCapture,
+        QWebEnginePermission.PermissionType.MediaAudioVideoCapture,
+        QWebEnginePermission.PermissionType.DesktopAudioVideoCapture,
+        QWebEnginePermission.PermissionType.DesktopVideoCapture,
+    }
+
+    def on_permission(permission) -> None:
+        if permission.permissionType() in _ALLOWED:
+            permission.grant()
+        else:
+            permission.deny()
+
     view = QWebEngineView()
     view.setPage(Page(view))
+    view.page().permissionRequested.connect(on_permission)
+    # "System audio" goes through getDisplayMedia, which asks the embedder
+    # which screen or window to share. Pick the primary screen so the call
+    # resolves instead of hanging the way the mic did.
+    view.page().desktopMediaRequested.connect(
+        lambda request: request.selectScreen(request.screensModel().index(0, 0))
+    )
     view.load(QUrl(f"http://127.0.0.1:{port}"))
     window.setCentralWidget(view)
     window.show()

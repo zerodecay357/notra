@@ -184,7 +184,14 @@ async function requireApiKey() {
 }
 
 async function startRecording() {
-  if (!(await requireApiKey())) return;
+  // Disable first: everything below awaits, and a second click landing in
+  // that gap would start a second recorder (InvalidStateError).
+  if (rec.mediaRecorder || $('recordBtn').disabled) return;
+  $('recordBtn').disabled = true;
+  try {
+    if (!(await requireApiKey())) return;
+  } catch { $('recordBtn').disabled = false; return; }
+
   const source = $('sourceSelect').value;
   $('recHint').textContent = '';
   try {
@@ -215,12 +222,13 @@ async function startRecording() {
     rec.timerId = setInterval(tickTimer, 250);
   } catch (err) {
     const msg = err.name === 'NotAllowedError'
-      ? 'Permission denied. Allow microphone (or screen-audio) access and try again.'
+      ? 'Permission denied. Allow microphone (or screen audio) access and try again.'
       : err.message;
     $('recHint').textContent = msg;
     $('recHint').classList.add('warn');
     toast(msg, 'err');
     cleanupStreams();
+    $('recordBtn').disabled = false; // let them try again
   }
 }
 
