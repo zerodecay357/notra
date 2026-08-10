@@ -59,7 +59,8 @@ class _ServerThread(threading.Thread):
 def main() -> int:
     # Imported lazily: only needed for the desktop build, not run.sh/tests.
     from PySide6.QtCore import QUrl
-    from PySide6.QtGui import QCloseEvent
+    from PySide6.QtGui import QCloseEvent, QDesktopServices
+    from PySide6.QtWebEngineCore import QWebEnginePage
     from PySide6.QtWebEngineWidgets import QWebEngineView
     from PySide6.QtWidgets import QApplication, QMainWindow
 
@@ -80,7 +81,28 @@ def main() -> int:
     window.setWindowTitle(APP_TITLE)
     window.resize(*WINDOW_SIZE)
 
+    class Page(QWebEnginePage):
+        """Keeps the app itself in this window, but hands anything pointing
+        elsewhere (the bug tracker, the API-key consoles) to the user's real
+        browser — an embedded view has no tabs, back button or password
+        manager, so it is the wrong place to land on an external site."""
+
+        def acceptNavigationRequest(self, url, nav_type, is_main_frame):  # noqa: N802
+            if url.host() not in ("127.0.0.1", "localhost"):
+                QDesktopServices.openUrl(url)
+                return False
+            return super().acceptNavigationRequest(url, nav_type, is_main_frame)
+
+        def createWindow(self, _window_type):  # noqa: N802
+            # target="_blank" asks for a new window; route it externally too.
+            popup = QWebEnginePage(self)
+            popup.urlChanged.connect(
+                lambda url: (QDesktopServices.openUrl(url), popup.deleteLater())
+            )
+            return popup
+
     view = QWebEngineView()
+    view.setPage(Page(view))
     view.load(QUrl(f"http://127.0.0.1:{port}"))
     window.setCentralWidget(view)
     window.show()

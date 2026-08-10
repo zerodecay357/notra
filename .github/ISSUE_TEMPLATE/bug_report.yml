@@ -1,0 +1,77 @@
+name: Bug report
+description: Something in Notra did not work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for testing Notra. The more of this you fill in, the faster it gets fixed.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you were doing, and what went wrong.
+      placeholder: I hit "Stop & generate" after a 40 minute lecture and it showed an error instead of a PDF.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: false
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Where did it fail
+      options:
+        - Starting the app
+        - Recording
+        - Transcribing
+        - Writing the notes
+        - Compiling the PDF
+        - Somewhere else / not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error message
+      description: >
+        Paste anything the app showed. If the PDF failed to compile, the log is
+        at ~/.local/share/notra/lectures/<id>/compile_error.log
+      render: text
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Notra version
+      description: From the release you downloaded.
+      placeholder: v0.1.0-beta
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: Run `lsb_release -d` if you are not sure.
+      placeholder: Ubuntu 24.04
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: AI provider
+      options:
+        - Claude
+        - Gemini
+        - Not relevant
+    validations:
+      required: false
