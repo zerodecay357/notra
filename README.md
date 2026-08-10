@@ -201,4 +201,4 @@ hit Regenerate.
 Claude works only from what was said. It's instructed not to invent formulas or
 results, and to mark unintelligible stretches rather than fill them in — but the
 notes are a study aid, so spot-check anything you're relying on for an exam.
-# notra
+
