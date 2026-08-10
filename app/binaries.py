@@ -13,9 +13,12 @@ from __future__ import annotations
 import os
 import shutil
 import sys
-from pathlib import Path
 
-BIN_DIR = Path(__file__).resolve().parent.parent / "bin"
+from . import config
+
+# BASE_DIR already accounts for PyInstaller's frozen layout (sys._MEIPASS),
+# so a packaged build finds its bundled bin/ next to the rest of the app.
+BIN_DIR = config.BASE_DIR / "bin"
 
 
 def find(name: str) -> str | None:

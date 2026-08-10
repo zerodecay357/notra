@@ -28,7 +28,8 @@ pip3 install -r requirements.txt
 ```
 
 Open <http://localhost:8000>, click **Settings**, paste your API key. That's it.
-The key is written to `.env` in this folder and is git-ignored.
+The key is written to `.env` in Notra's per-user data directory (see Layout
+below) — never inside this repo, so there's nothing to accidentally commit.
 
 ## Using it
 
@@ -84,6 +85,7 @@ a References section citing standard texts with chapter numbers.
 | Gemini model | 2.5 Flash is fast with a generous free tier; 2.5 Pro is the quality option. |
 | Effort | `high` is the sweet spot; `xhigh` for dense technical lectures. |
 | Whisper model | `small` is the balance. `medium` is noticeably more accurate but ~3× slower on CPU. `tiny` for a quick draft. |
+| CPU cores for transcription | `0` (auto) uses all cores but one, so the machine stays responsive while it works. Set a specific number to reserve more headroom, or if you want to push it higher than the auto default. |
 | Spoken language | Leave on auto unless it's mis-detecting. |
 | Notes style | `detailed` (replaces attending) or `concise` (revision-oriented). |
 
@@ -104,10 +106,18 @@ app/
   db.py          SQLite
   courses.py     folder-based course database
   static/        the web UI
-data/lectures/<id>/
-  recording.webm  audio.wav  transcript.txt  notes.tex  notes.pdf
-data/courses/<course>/
-  course.json  lectures/<date>_<topic>_<id>.pdf (+ .json details)
+```
+
+Your recordings, transcripts, and PDFs live outside the repo, in
+`~/.local/share/notra` (override with `NOTRA_DATA_DIR`):
+
+```
+~/.local/share/notra/
+  notra.db  .env
+  lectures/<id>/
+    recording.webm  audio.wav  transcript.txt  notes.tex  notes.pdf
+  courses/<course>/
+    course.json  lectures/<date>_<topic>_<id>.pdf (+ .json details)
 ```
 
 ## If something goes wrong

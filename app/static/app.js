@@ -3,10 +3,13 @@
 
 const $ = (id) => document.getElementById(id);
 
+const UNCATEGORIZED = '__uncategorized__'; // sentinel: never a real course name
+
 const state = {
   lectures: [],
   courses: [],
   currentId: null,
+  currentCourse: null,
   view: 'home',
   pendingBlob: null,
   pendingName: null, // original filename when the blob came from an upload
@@ -168,7 +171,20 @@ function setRecStatus(text, cls = '') {
   $('recStatus').className = 'rec-status ' + cls;
 }
 
+async function requireApiKey() {
+  // Hard gate: nothing that leads to a Claude/Gemini call starts without a
+  // key. Checked fresh each time — the user may have just saved one.
+  try {
+    const h = await api('/api/health');
+    if (h.api_key) return true;
+  } catch { return true; } // server unreachable: let the action surface that error
+  toast('No API key set. Add one in Settings to generate notes.', 'err');
+  openSettings();
+  return false;
+}
+
 async function startRecording() {
+  if (!(await requireApiKey())) return;
   const source = $('sourceSelect').value;
   $('recHint').textContent = '';
   try {
@@ -342,6 +358,7 @@ function showGenerateButton(message) {
 
 async function submitRecording() {
   if (!state.pendingBlob) return;
+  if (!(await requireApiKey())) return;
   const meta = readForm();
   const missing = [];
   if (!meta.course) missing.push('course');
@@ -373,7 +390,7 @@ async function submitRecording() {
     setRecStatus('Ready');
     await Promise.all([refreshLibrary(), loadCourses()]);
     openLecture(id);
-    toast('Recording uploaded — transcription started.', 'ok');
+    toast('Recording uploaded. Transcription started.', 'ok');
   } catch (err) {
     box.className = 'upload-status err';
     box.textContent = 'Upload failed: ' + err.message;
@@ -382,6 +399,28 @@ async function submitRecording() {
 }
 
 /* ═════════════════════════════ library ═════════════════════════════ */
+
+function buildLecItem(lec, { showCourse = true } = {}) {
+  const item = document.createElement('button');
+  item.className = 'lec-item' + (lec.id === state.currentId ? ' active' : '');
+  item.onclick = () => openLecture(lec.id);
+
+  const dot = document.createElement('span');
+  dot.className = 'sd ' + lec.status;
+
+  const body = document.createElement('span');
+  const title = document.createElement('span');
+  title.className = 'lt';
+  title.textContent = lec.topic || 'Untitled lecture';
+  const sub = document.createElement('span');
+  sub.className = 'ls';
+  const bits = showCourse ? [lec.course, humanDate(lec.lecture_date)] : [humanDate(lec.lecture_date)];
+  sub.textContent = bits.filter(Boolean).join(' · ');
+  body.append(title, sub);
+
+  item.append(dot, body);
+  return item;
+}
 
 async function refreshLibrary() {
   try {
@@ -400,26 +439,105 @@ async function refreshLibrary() {
     return;
   }
 
+  for (const lec of state.lectures) list.append(buildLecItem(lec));
+}
+
+/* ═════════════════════════════ course browser ═════════════════════════════ */
+
+function courseGroups() {
+  // Map course name (or the UNCATEGORIZED sentinel) -> its lectures, most
+  // recent first — state.lectures is already ordered that way by the API.
+  const groups = new Map();
+  for (const c of state.courses) groups.set(c.name, []);
   for (const lec of state.lectures) {
-    const item = document.createElement('button');
-    item.className = 'lec-item' + (lec.id === state.currentId ? ' active' : '');
-    item.onclick = () => openLecture(lec.id);
-
-    const dot = document.createElement('span');
-    dot.className = 'sd ' + lec.status;
-
-    const body = document.createElement('span');
-    const title = document.createElement('span');
-    title.className = 'lt';
-    title.textContent = lec.topic || 'Untitled lecture';
-    const sub = document.createElement('span');
-    sub.className = 'ls';
-    sub.textContent = [lec.course, humanDate(lec.lecture_date)].filter(Boolean).join(' · ');
-    body.append(title, sub);
-
-    item.append(dot, body);
-    list.append(item);
+    const key = (lec.course || '').trim() || UNCATEGORIZED;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(lec);
   }
+  return groups;
+}
+
+async function openCourses() {
+  state.currentId = null;
+  showView('courses');
+  if (location.hash !== '#/courses') location.hash = '#/courses';
+  await loadCourses();
+  await refreshLibrary();
+  renderCourseGrid();
+}
+
+function renderCourseGrid() {
+  const grid = $('courseGrid');
+  grid.innerHTML = '';
+  const groups = courseGroups();
+
+  if (!groups.size) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-lib';
+    empty.textContent = 'No courses yet. Set a course when you record a lecture.';
+    grid.append(empty);
+    return;
+  }
+
+  const names = [...groups.keys()].sort((a, b) =>
+    a === UNCATEGORIZED ? 1 : b === UNCATEGORIZED ? -1 : a.localeCompare(b));
+
+  for (const name of names) {
+    const lectures = groups.get(name);
+    const card = document.createElement('button');
+    card.className = 'course-card' + (name === UNCATEGORIZED ? ' uncategorized' : '');
+    card.onclick = () => openCourseDetail(name);
+
+    const h3 = document.createElement('h3');
+    h3.textContent = name === UNCATEGORIZED ? 'Uncategorized' : name;
+
+    const count = document.createElement('span');
+    count.className = 'course-count';
+    count.textContent = lectures.length === 1 ? '1 lecture' : `${lectures.length} lectures`;
+
+    card.append(h3, count);
+
+    if (lectures.length) {
+      const last = lectures[0];
+      const line = document.createElement('span');
+      line.className = 'course-last';
+      const when = humanDate(last.lecture_date);
+      line.textContent = `Last: ${last.topic || 'Untitled lecture'}${when ? ' · ' + when : ''}`;
+      card.append(line);
+    }
+
+    grid.append(card);
+  }
+}
+
+async function openCourseDetail(name) {
+  state.currentId = null;
+  state.currentCourse = name;
+  showView('course-detail');
+  const hashName = name === UNCATEGORIZED ? '_uncategorized' : encodeURIComponent(name);
+  if (location.hash !== '#/course/' + hashName) location.hash = '#/course/' + hashName;
+  await refreshLibrary();
+  renderCourseDetail();
+}
+
+function renderCourseDetail() {
+  const name = state.currentCourse;
+  $('courseDetailName').textContent = name === UNCATEGORIZED ? 'Uncategorized' : name;
+
+  const lectures = courseGroups().get(name) || [];
+  $('courseDetailMeta').textContent =
+    lectures.length === 1 ? '1 lecture' : `${lectures.length} lectures`;
+
+  const list = $('courseDetailList');
+  list.innerHTML = '';
+  if (!lectures.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-lib';
+    empty.textContent = 'No lectures in this course yet.';
+    list.append(empty);
+    return;
+  }
+  for (const lec of lectures) list.append(buildLecItem(lec, { showCourse: false }));
 }
 
 /* ═════════════════════════════ lecture view ═════════════════════════════ */
@@ -436,7 +554,10 @@ function showView(name) {
   $('homeView').classList.toggle('hidden', name !== 'home');
   $('recordView').classList.toggle('hidden', name !== 'record');
   $('lectureView').classList.toggle('hidden', name !== 'lecture');
+  $('coursesView').classList.toggle('hidden', name !== 'courses');
+  $('courseDetailView').classList.toggle('hidden', name !== 'course-detail');
   $('navHome').classList.toggle('active', name === 'home');
+  $('navCourses').classList.toggle('active', name === 'courses' || name === 'course-detail');
 }
 
 function openHome() {
@@ -463,11 +584,18 @@ async function openLecture(id) {
 }
 
 function routeFromHash() {
-  const match = location.hash.match(/^#\/l\/([A-Za-z0-9]+)$/);
-  if (match) {
-    if (match[1] !== state.currentId) openLecture(match[1]);
+  const lecMatch = location.hash.match(/^#\/l\/([A-Za-z0-9]+)$/);
+  const courseMatch = location.hash.match(/^#\/course\/(.+)$/);
+  if (lecMatch) {
+    if (lecMatch[1] !== state.currentId) openLecture(lecMatch[1]);
   } else if (location.hash === '#/record') {
     if (state.view !== 'record') openRecorder();
+  } else if (location.hash === '#/courses') {
+    if (state.view !== 'courses') openCourses();
+  } else if (courseMatch) {
+    const name = courseMatch[1] === '_uncategorized'
+      ? UNCATEGORIZED : decodeURIComponent(courseMatch[1]);
+    if (name !== state.currentCourse) openCourseDetail(name);
   } else if (location.hash === '#how') {
     if (state.view !== 'home') showView('home');
   } else if (state.view !== 'home') {
@@ -495,7 +623,7 @@ function renderSteps(stage) {
 const STAGE_LABEL = {
   queued: 'Queued…',
   converting: 'Decoding the recording…',
-  transcribing: 'Transcribing speech locally — this is the slow part on CPU.',
+  transcribing: 'Transcribing speech locally. This is the slow part on CPU.',
   writing: 'Claude is writing your notes…',
   compiling: 'Compiling the LaTeX into a PDF…',
   done: 'Done.',
@@ -611,7 +739,7 @@ async function openSettings() {
     chip.textContent = s.anthropic_key_set ? 'Key active' : 'No key set';
     $('keyHint').textContent = s.anthropic_key_set
       ? `A key is saved (ends ${s.ANTHROPIC_API_KEY}). Leave blank to keep it.`
-      : 'Required. Get one at console.anthropic.com — stored locally in .env.';
+      : 'Required. Get one at console.anthropic.com. Stored locally in .env.';
 
     $('sGeminiKey').value = '';
     const gchip = $('geminiKeyStatus');
@@ -619,13 +747,15 @@ async function openSettings() {
     gchip.textContent = s.gemini_key_set ? 'Key active' : 'No key set';
     $('geminiKeyHint').textContent = s.gemini_key_set
       ? `A key is saved (ends ${s.GEMINI_API_KEY}). Leave blank to keep it.`
-      : 'Free keys at aistudio.google.com/apikey — stored locally in .env.';
+      : 'Free keys at aistudio.google.com/apikey. Stored locally in .env.';
 
     $('sModel').value = s.CLAUDE_MODEL;
     $('sEffort').value = s.CLAUDE_EFFORT;
     $('sGeminiModel').value = s.GEMINI_MODEL || 'gemini-2.5-flash';
     $('sWhisper').value = s.WHISPER_MODEL;
+    $('sWhisperThreads').value = s.WHISPER_CPU_THREADS || '0';
     $('sLang').value = s.WHISPER_LANGUAGE || '';
+    $('sDataDir').textContent = s.data_dir || '';
     $('sStyle').value = s.NOTES_STYLE;
     $('settingsModal').classList.remove('hidden');
   } catch (err) {
@@ -642,6 +772,7 @@ async function saveSettings() {
     GEMINI_API_KEY: $('sGeminiKey').value.trim(),
     GEMINI_MODEL: $('sGeminiModel').value,
     WHISPER_MODEL: $('sWhisper').value,
+    WHISPER_CPU_THREADS: String(Math.max(0, parseInt($('sWhisperThreads').value, 10) || 0)),
     WHISPER_LANGUAGE: $('sLang').value,
     NOTES_STYLE: $('sStyle').value,
   };
@@ -686,6 +817,8 @@ $('pauseBtn').onclick = togglePause;
 $('stopBtn').onclick = stopRecording;
 $('newRecordingBtn').onclick = openRecorder;
 $('navHome').onclick = openHome;
+$('navCourses').onclick = openCourses;
+$('courseBackBtn').onclick = openCourses;
 $('heroStartBtn').onclick = openRecorder;
 $('ctaStartBtn').onclick = openRecorder;
 $('settingsBtn').onclick = openSettings;
@@ -711,6 +844,10 @@ $('fileChipRemove').onclick = () => {
 };
 $('sProvider').onchange = toggleProviderFields;
 $('settingsCancel').onclick = () => $('settingsModal').classList.add('hidden');
+$('openDataDirBtn').onclick = async () => {
+  try { await api('/api/open-data-folder', { method: 'POST' }); }
+  catch (err) { toast(err.message, 'err'); }
+};
 $('settingsSave').onclick = saveSettings;
 $('settingsModal').onclick = (e) => {
   if (e.target === $('settingsModal')) $('settingsModal').classList.add('hidden');
@@ -720,6 +857,7 @@ document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => switchTab(t
 
 $('regenBtn').onclick = async () => {
   if (!state.currentId) return;
+  if (!(await requireApiKey())) return;
   try {
     await api(`/api/lectures/${state.currentId}/regenerate`, {
       method: 'POST',

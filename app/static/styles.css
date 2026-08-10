@@ -4,6 +4,15 @@
    lines, hard offset shadows. No gradients, no glass, no glow.
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* Bundled Inter (variable: one file covers weights 100–900). */
+@font-face {
+  font-family: 'Inter';
+  src: url('/static/fonts/InterVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --paper:       #F6F1E6;
   --paper-2:     #EFE8D6;
@@ -23,9 +32,16 @@
   --amber:       #9C6B1F;
   --amber-soft:  #F8F0DF;
 
-  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --body:  'Newsreader', Georgia, serif;
-  --mono:  'IBM Plex Mono', 'Courier New', monospace;
+  /* One family everywhere. Inter is bundled locally (the closest open face
+     to SF Pro), so every machine renders identically — fully offline. The
+     Apple stack sits behind it as a fallback. */
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+          'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --serif: var(--sans); /* legacy var names kept; both point at the stack */
+  --body:  var(--sans);
+  --mono:  var(--sans);
+  /* real monospace only where alignment matters (transcript) */
+  --code:  ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   --shadow:    3px 3px 0 rgba(28, 27, 24, .10);
   --shadow-lg: 6px 6px 0 rgba(28, 27, 24, .09);
@@ -168,7 +184,7 @@ body {
 @keyframes blink { 50% { opacity: .3; } }
 
 .empty-lib {
-  color: var(--muted); font-size: 14px; font-style: italic;
+  color: var(--muted); font-size: 14px;
   padding: 22px 8px; text-align: center; line-height: 1.5;
 }
 
@@ -250,7 +266,7 @@ body {
   line-height: 1.04; letter-spacing: -0.025em; margin-bottom: 6px;
   font-variation-settings: 'opsz' 100;
 }
-.hero h1 em { font-style: italic; font-weight: 520; }
+.hero h1 em { font-style: normal; font-weight: 700; }
 
 .hero-flourish { width: 220px; height: 12px; margin: 2px 0 18px; }
 .hero-flourish path {
@@ -264,7 +280,7 @@ body {
   font-size: 18px; line-height: 1.65; color: var(--ink-soft);
   max-width: 52ch; margin-bottom: 28px;
 }
-.hero-sub em { font-style: italic; }
+.hero-sub em { font-style: normal; font-weight: 600; }
 
 .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 26px; }
 
@@ -299,7 +315,7 @@ body {
   font-family: var(--serif); font-weight: 600; font-size: clamp(26px, 3vw, 34px);
   letter-spacing: -0.02em; margin-bottom: 34px;
 }
-.section-title em { font-style: italic; font-weight: 480; }
+.section-title em { font-style: normal; font-weight: 400; color: var(--muted); }
 
 .how { padding: 40px 0 26px; border-top: 1px solid var(--line-strong); }
 
@@ -363,6 +379,64 @@ body {
 }
 .cta-card p { color: var(--ink-soft); font-size: 15.5px; }
 
+/* ───────────────────────── Courses ───────────────────────── */
+
+.course-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 18px; padding-bottom: 20px;
+}
+.course-card {
+  position: relative; text-align: left; cursor: pointer;
+  background: var(--card); border: 1px solid var(--line-strong); border-radius: var(--radius);
+  padding: 20px 20px 18px; box-shadow: var(--shadow);
+  transition: transform .18s ease, box-shadow .18s ease;
+  overflow: hidden; display: flex; flex-direction: column; gap: 10px;
+}
+.course-card:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-lg); }
+.course-card::after { /* folded corner, matches paper-card */
+  content: ''; position: absolute; top: 0; right: 0;
+  border-style: solid; border-width: 0 22px 22px 0;
+  border-color: var(--paper) var(--paper) var(--paper-2) var(--paper);
+  filter: drop-shadow(-1px 1px 1px rgba(28,27,24,.12));
+}
+.course-card h3 {
+  font-family: var(--serif); font-weight: 620; font-size: 18px;
+  padding-right: 20px; line-height: 1.25;
+}
+.course-card .course-count {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--muted);
+}
+.course-card .course-last {
+  font-size: 13.5px; color: var(--ink-soft); line-height: 1.4;
+  border-top: 1px dotted var(--line-strong); padding-top: 9px; margin-top: auto;
+}
+.course-card.uncategorized { border-style: dashed; }
+
+.course-back-btn { margin-bottom: 10px; }
+
+/* Data folder row in Settings */
+.data-dir-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  border-top: 1px dotted var(--line-strong); margin-top: 18px; padding-top: 14px;
+}
+.data-dir-label {
+  display: block; font-size: 11px; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 3px;
+}
+.data-dir-path {
+  font-family: var(--code); font-size: 12px; color: var(--ink-soft);
+  word-break: break-all;
+}
+
+.course-lec-list {
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--card); box-shadow: var(--shadow); overflow: hidden;
+}
+.course-lec-list .lec-item { padding: 13px 16px; }
+.course-lec-list .lec-item:last-child { border-bottom: none; }
+.course-lec-list .lec-item .lt { font-size: 15px; }
+.course-lec-list .lec-item .ls { font-size: 11px; }
+
 /* ───────────────────────── View headers ───────────────────────── */
 
 .view-head { margin-bottom: 26px; }
@@ -370,7 +444,7 @@ body {
   font-family: var(--serif); font-weight: 620; font-size: clamp(28px, 3.4vw, 40px);
   letter-spacing: -0.02em; margin-bottom: 8px;
 }
-.view-head h1 em { font-style: italic; font-weight: 500; }
+.view-head h1 em { font-style: normal; font-weight: 400; color: var(--muted); }
 .view-head p { max-width: 62ch; font-size: 16px; }
 
 .lecture-head {
@@ -435,7 +509,8 @@ select { cursor: pointer; }
 }
 .timer {
   font-family: var(--mono); font-weight: 600; font-size: 30px;
-  letter-spacing: .04em; line-height: 1.1;
+  letter-spacing: .02em; line-height: 1.1;
+  font-variant-numeric: tabular-nums; /* digits stay put as they tick */
 }
 .rec-status {
   font-family: var(--mono); font-size: 10.5px; letter-spacing: .18em;
@@ -603,7 +678,7 @@ select { cursor: pointer; }
 .transcript {
   margin: 14px 18px 18px; padding: 16px 18px; max-height: 62vh; overflow-y: auto;
   background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
-  font-family: var(--mono); font-size: 12.5px; line-height: 1.8;
+  font-family: var(--code); font-size: 12.5px; line-height: 1.8;
   white-space: pre-wrap; word-break: break-word; color: var(--ink-soft);
 }
 
@@ -616,7 +691,7 @@ select { cursor: pointer; }
 }
 .impact-item { color: var(--ink-soft); font-weight: 500; }
 .impact-sep { color: var(--line-strong); }
-.impact-equiv { font-style: italic; }
+.impact-equiv { font-style: normal; }
 .impact-info {
   margin-left: auto; cursor: help; color: var(--muted); font-style: normal;
   border: 1px solid var(--line-strong); border-radius: 50%;

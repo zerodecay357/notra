@@ -55,7 +55,22 @@ def get_settings() -> dict:
     # Legacy field: does the *active* provider have credentials?
     out["api_key_set"] = out["gemini_key_set"] if settings.get("AI_PROVIDER") == "gemini" \
         else out["anthropic_key_set"]
+    out["data_dir"] = str(config.DATA_DIR)  # read-only: where everything is stored
     return out
+
+
+@app.post("/api/open-data-folder")
+def open_data_folder() -> dict:
+    """Open the data directory in the OS file manager."""
+    import subprocess
+    try:
+        subprocess.Popen(
+            ["xdg-open", str(config.DATA_DIR)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    except OSError as exc:
+        raise HTTPException(500, f"Could not open the folder: {exc}")
+    return {"ok": True}
 
 
 @app.post("/api/settings")

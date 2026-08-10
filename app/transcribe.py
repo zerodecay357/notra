@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import threading
 from pathlib import Path
 from typing import Callable
@@ -9,19 +10,37 @@ from typing import Callable
 from . import config
 
 _model = None
-_model_key: tuple[str, str] | None = None
+_model_key: tuple[str, str, int] | None = None
 _model_lock = threading.Lock()
 
 
-def _load_model(size: str, compute_type: str):
+def _resolve_cpu_threads(setting: str) -> int:
+    """0 (the default) means auto: all cores but one, so the OS/UI stays
+    responsive during a live recording. A positive value pins the exact
+    thread count ctranslate2 uses to decode one file — this is the "how
+    many cores" the user gets to choose in Settings."""
+    try:
+        threads = int(setting)
+    except (TypeError, ValueError):
+        threads = 0
+    if threads > 0:
+        return threads
+    cores = os.cpu_count() or 1
+    return max(1, cores - 1)
+
+
+def _load_model(size: str, compute_type: str, cpu_threads: int):
     global _model, _model_key
     with _model_lock:
-        if _model is not None and _model_key == (size, compute_type):
+        key = (size, compute_type, cpu_threads)
+        if _model is not None and _model_key == key:
             return _model
         from faster_whisper import WhisperModel
 
-        _model = WhisperModel(size, device="cpu", compute_type=compute_type)
-        _model_key = (size, compute_type)
+        _model = WhisperModel(
+            size, device="cpu", compute_type=compute_type, cpu_threads=cpu_threads
+        )
+        _model_key = key
         return _model
 
 
@@ -35,8 +54,9 @@ def transcribe(
     size = settings.get("WHISPER_MODEL") or "small"
     compute_type = settings.get("WHISPER_COMPUTE") or "int8"
     language = settings.get("WHISPER_LANGUAGE") or None
+    cpu_threads = _resolve_cpu_threads(settings.get("WHISPER_CPU_THREADS", "0"))
 
-    model = _load_model(size, compute_type)
+    model = _load_model(size, compute_type, cpu_threads)
 
     segment_iter, info = model.transcribe(
         str(wav_path),

@@ -21,3 +21,9 @@ data/
 
 # Bundled binaries (tectonic, ffmpeg) — fetched at package time, not committed
 bin/
+
+# PyInstaller build output and the isolated venv used to build it
+build/
+dist/
+.venv-build/
+*.AppImage
