@@ -4,11 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#F6F1E6">
-<title>Notra — Lectures, typeset</title>
+<title>Notra. Lectures, typeset</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -28,6 +25,10 @@
       <button id="navHome" class="nav-link">
         <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6h-6v6H3z"/></svg>
         Home
+      </button>
+      <button id="navCourses" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 0 4 22V5.5Z"/><path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20"/></svg>
+        Courses
       </button>
       <button id="newRecordingBtn" class="btn btn-ink btn-block">
         <span class="dot-rec"></span> New recording
@@ -54,16 +55,14 @@
 
       <div class="hero">
         <div class="hero-copy">
-          <span class="eyebrow reveal">record&nbsp;&nbsp;·&nbsp;&nbsp;transcribe&nbsp;&nbsp;·&nbsp;&nbsp;typeset</span>
-          <h1 class="reveal d1">Every lecture,<br><em>properly&nbsp;typeset<span class="red">.</span></em></h1>
+          <span class="eyebrow reveal">notra</span>
+          <h1 class="reveal d1">Turn it on.<br><em>Go to sleep<span class="red">.</span></em></h1>
           <svg class="hero-flourish reveal d2" viewBox="0 0 220 12" aria-hidden="true">
             <path d="M3 8 C 40 3, 90 10, 130 6 S 200 4, 217 7" fill="none"/>
           </svg>
           <p class="hero-sub reveal d2">
-            Record the class — or drop in the audio afterwards. Notra transcribes it
-            privately on your own machine, then Claude writes structured LaTeX notes
-            and compiles a real PDF: definitions, theorems, derivations, and a ranked
-            <em>Exam&nbsp;Focus</em> list you can actually revise from.
+            Notra records the lecture and hands you a typeset PDF,
+            with an <em>Exam&nbsp;Focus</em> list you can actually revise from.
           </p>
           <div class="hero-actions reveal d3">
             <button id="heroStartBtn" class="btn btn-ink btn-lg"><span class="dot-rec"></span> Start recording</button>
@@ -72,7 +71,7 @@
           <div class="hero-stamps reveal d4">
             <span class="stamp">runs locally</span>
             <span class="stamp">real LaTeX</span>
-            <span class="stamp">tab-audio capture</span>
+            <span class="stamp">tab audio capture</span>
           </div>
         </div>
 
@@ -162,27 +161,24 @@
 
       <!-- How it works -->
       <div id="how" class="how">
-        <h2 class="section-title reveal">From lecture hall to PDF, <em>in three steps</em></h2>
+        <h2 class="section-title reveal">Lecture to PDF, <em>in three steps</em></h2>
         <div class="how-grid">
           <div class="how-col reveal">
             <span class="how-num">1<span class="red">.</span></span>
-            <h3>Record or upload</h3>
-            <p>Capture the mic, the tab audio of an online lecture, or both at once —
-               or just drop in a voice file from your phone.</p>
+            <h3>Record</h3>
+            <p>Mic, tab audio, or a file from your phone.</p>
             <span class="foot-tag">mic · system · file</span>
           </div>
           <div class="how-col reveal d1">
             <span class="how-num">2<span class="red">.</span></span>
-            <h3>Private transcription</h3>
-            <p>Whisper runs on your own CPU — the audio never leaves your machine.
-               Silence and noise are skipped automatically.</p>
+            <h3>Transcribe</h3>
+            <p>On your own machine. The audio never leaves it.</p>
             <span class="foot-tag">local whisper</span>
           </div>
           <div class="how-col reveal d2">
             <span class="how-num">3<span class="red">.</span></span>
-            <h3>Claude typesets</h3>
-            <p>The transcript becomes structured LaTeX — definitions, theorems,
-               worked examples — compiled into a printable PDF.</p>
+            <h3>Typeset</h3>
+            <p>Claude writes structured notes, compiled to a real PDF.</p>
             <span class="foot-tag">LaTeX → PDF</span>
           </div>
         </div>
@@ -195,24 +191,21 @@
             <svg viewBox="0 0 24 24"><path d="M12 3a4 4 0 0 1 4 4v5a4 4 0 0 1-8 0V7a4 4 0 0 1 4-4Zm7 9a7 7 0 0 1-14 0M12 19v3"/></svg>
           </div>
           <h3>Made for real lectures</h3>
-          <p>Pause and resume freely, watch the live waveform, and capture tab audio
-             for online classes. A crash costs seconds, not the lecture.</p>
+          <p>Pause and resume freely. A crash costs seconds, not the lecture.</p>
         </div>
         <div class="paper-card reveal d1">
           <div class="feat-icon">
             <svg viewBox="0 0 24 24"><path d="M12 3l8 4v6c0 4.4-3.2 7.4-8 8-4.8-.6-8-3.6-8-8V7l8-4Zm0 5v8m-3-5 3 3 3-3"/></svg>
           </div>
           <h3>Private by design</h3>
-          <p>Transcription is fully local. Only the finished text transcript is sent
-             to Claude, with your own key — nothing else, nowhere else.</p>
+          <p>Only the text transcript is sent to Claude, with your own key.</p>
         </div>
         <div class="paper-card reveal d2">
           <div class="feat-icon">
             <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6V2Zm9 0v5h5M9 13h8M9 17h6M9 9h3"/></svg>
           </div>
           <h3>Notes worth revising</h3>
-          <p>Not a wall of transcript — sections, boxed definitions, clean math,
-             the questions asked in class, and a ranked exam-focus list.</p>
+          <p>Boxed definitions, clean math, and a ranked exam focus list.</p>
         </div>
       </div>
 
@@ -220,17 +213,38 @@
       <div class="cta-card reveal">
         <div>
           <h2>Ready for your next lecture<span class="red">?</span></h2>
-          <p>Set your API key once in Settings, then just hit record.</p>
+          <p>Set your key once. Then just turn it on.</p>
         </div>
         <button id="ctaStartBtn" class="btn btn-ink btn-lg">Open the recorder</button>
       </div>
+    </section>
+
+    <!-- ═══════════════════ Courses view ═══════════════════ -->
+    <section id="coursesView" class="view hidden">
+      <header class="view-head">
+        <h1>Your <em>courses</em></h1>
+        <p class="muted">Every course's notes in one place. Open one to see just its lectures.</p>
+      </header>
+      <div id="courseGrid" class="course-grid"></div>
+    </section>
+
+    <!-- ═══════════════ Single course view ═══════════════ -->
+    <section id="courseDetailView" class="view hidden">
+      <header class="view-head lecture-head">
+        <div>
+          <button id="courseBackBtn" class="btn btn-ghost course-back-btn">&larr; All courses</button>
+          <h1 id="courseDetailName">…</h1>
+          <p id="courseDetailMeta" class="muted"></p>
+        </div>
+      </header>
+      <div id="courseDetailList" class="course-lec-list"></div>
     </section>
 
     <!-- ═══════════════════ Recorder view ═══════════════════ -->
     <section id="recordView" class="view hidden">
       <header class="view-head">
         <h1>New <em>recording</em></h1>
-        <p class="muted">Hit record when the lecture starts — pause any time. When you stop,
+        <p class="muted">Hit record when the lecture starts. Pause any time. When you stop,
            Notra transcribes locally and Claude writes the notes. Or skip recording and
            upload an audio file below.</p>
       </header>
@@ -269,7 +283,7 @@
       <div class="card">
         <h2 class="card-title">Or upload a voice file</h2>
         <p class="muted small">Already have the lecture on your phone or as a download?
-           Drop it here — mp3, m4a, wav, ogg, webm and most others work.</p>
+           Drop it here. mp3, m4a, wav, ogg, webm and most others work.</p>
         <div id="dropZone" class="drop-zone">
           <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0 5 5m-5-5L7 9M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
           <span><strong>Drop an audio file</strong> or <button id="browseBtn" class="link-btn" type="button">browse</button></span>
@@ -325,7 +339,7 @@
     <section id="lectureView" class="view hidden">
       <header class="view-head lecture-head">
         <div>
-          <h1 id="lecTopic">—</h1>
+          <h1 id="lecTopic">…</h1>
           <p id="lecMeta" class="muted"></p>
         </div>
         <div class="head-actions">
@@ -364,7 +378,7 @@
             <span class="impact-item"><span id="impCo2"></span></span>
             <span id="impEquiv" class="impact-equiv"></span>
             <span class="impact-info" tabindex="0"
-              title="Anthropic doesn't publish per-token energy or carbon figures. This is a rough, order-of-magnitude estimate from public research on LLM inference energy use and the global average grid carbon intensity (~480 g CO₂/kWh) — illustrative, not measured.">ⓘ</span>
+              title="Anthropic doesn't publish energy or carbon figures per token. This is a rough estimate from public research on LLM inference energy use and the global average grid carbon intensity (~480 g CO₂/kWh) — illustrative, not measured.">ⓘ</span>
           </div>
           <div id="tabPdf" class="tab-panel">
             <iframe id="pdfFrame" title="Lecture notes PDF"></iframe>
@@ -387,8 +401,8 @@
     <label class="field">
       <span>AI provider</span>
       <select id="sProvider">
-        <option value="anthropic">Claude (Anthropic) — best notes</option>
-        <option value="gemini">Gemini (Google) — has a free tier</option>
+        <option value="anthropic">Claude (Anthropic): best notes</option>
+        <option value="gemini">Gemini (Google): free tier available</option>
       </select>
     </label>
 
@@ -402,19 +416,19 @@
       <label class="field">
         <span>Claude model</span>
         <select id="sModel">
-          <option value="claude-opus-5">Claude Opus 5 — best notes</option>
-          <option value="claude-sonnet-5">Claude Sonnet 5 — faster, cheaper</option>
-          <option value="claude-haiku-4-5">Claude Haiku 4.5 — fastest</option>
+          <option value="claude-opus-5">Claude Opus 5: best notes</option>
+          <option value="claude-sonnet-5">Claude Sonnet 5: faster, cheaper</option>
+          <option value="claude-haiku-4-5">Claude Haiku 4.5: fastest</option>
         </select>
       </label>
 
       <label class="field">
         <span>Effort</span>
         <select id="sEffort">
-          <option value="high">High — recommended</option>
-          <option value="xhigh">Extra high — most thorough</option>
-          <option value="medium">Medium — cheaper</option>
-          <option value="low">Low — quickest</option>
+          <option value="high">High: recommended</option>
+          <option value="xhigh">Extra high: most thorough</option>
+          <option value="medium">Medium: cheaper</option>
+          <option value="low">Low: quickest</option>
         </select>
       </label>
     </div>
@@ -429,26 +443,32 @@
       <label class="field">
         <span>Gemini model</span>
         <select id="sGeminiModel">
-          <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast, generous free tier</option>
-          <option value="gemini-2.5-pro">Gemini 2.5 Pro — best quality</option>
+          <option value="gemini-2.5-flash">Gemini 2.5 Flash: fast, generous free tier</option>
+          <option value="gemini-2.5-pro">Gemini 2.5 Pro: best quality</option>
         </select>
       </label>
     </div>
 
-    <label class="field">
-      <span>Whisper model <small>(local transcription, runs on CPU)</small></span>
-      <select id="sWhisper">
-        <option value="tiny">tiny — fastest, roughest</option>
-        <option value="small">small — recommended balance</option>
-        <option value="medium">medium — most accurate, ~3× slower</option>
-      </select>
-    </label>
+    <div class="form-grid">
+      <label class="field">
+        <span>Whisper model <small>(local transcription, runs on CPU)</small></span>
+        <select id="sWhisper">
+          <option value="tiny">tiny: fastest, roughest</option>
+          <option value="small">small: recommended balance</option>
+          <option value="medium">medium: most accurate, slower</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>CPU cores for transcription <small>(0 = auto, all but one)</small></span>
+        <input id="sWhisperThreads" type="number" min="0" max="64" step="1" value="0">
+      </label>
+    </div>
 
     <div class="form-grid">
       <label class="field">
         <span>Spoken language</span>
         <select id="sLang">
-          <option value="">Auto-detect</option>
+          <option value="">Automatic</option>
           <option value="en">English</option>
           <option value="hi">Hindi</option>
           <option value="es">Spanish</option>
@@ -464,6 +484,14 @@
           <option value="concise">Concise</option>
         </select>
       </label>
+    </div>
+
+    <div class="data-dir-row">
+      <div>
+        <span class="data-dir-label">Your data</span>
+        <span id="sDataDir" class="data-dir-path">…</span>
+      </div>
+      <button id="openDataDirBtn" class="btn btn-ghost">Open folder</button>
     </div>
 
     <div class="modal-actions">
