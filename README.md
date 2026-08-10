@@ -1,35 +1,90 @@
 # Notra
 
-Record a lecture → get a properly typeset PDF of notes.
+**Turn it on. Go to sleep.**
+
+Record a lecture, get a properly typeset PDF of notes.
 
 You hit record, the lecture happens, you hit stop. Notra transcribes the audio
-locally with Whisper, sends the transcript to Claude, and compiles the result
-into a LaTeX-quality PDF with definitions, theorems, derivations, the questions
-students asked in class, and a ranked **Exam Focus** section highlighting what's
-most likely to come up.
+locally with Whisper, sends the transcript to Claude or Gemini, and compiles the
+result into a LaTeX-quality PDF with definitions, theorems, derivations, the
+questions students asked in class, and a ranked **Exam Focus** section
+highlighting what's most likely to come up.
 
-## What you need
+Transcription runs **locally and free**. No audio ever leaves your machine;
+only the text transcript is sent to the AI provider.
 
-| Thing | Why | Install |
-|---|---|---|
-| Python 3.10+ | runs the app | already have it |
-| `ffmpeg` | decodes the browser recording | `sudo apt install ffmpeg` |
-| a LaTeX engine | renders the PDF | **tectonic** (recommended): a single small binary from [tectonic-typesetting.github.io](https://tectonic-typesetting.github.io) — drop it in `bin/` or on PATH. It downloads only the packages it needs on first compile. Or TeX Live's `pdflatex` (`sudo apt install texlive-latex-extra texlive-fonts-recommended`, ~4 GB). |
-| an AI API key | writes the notes | **Claude** ([console.anthropic.com](https://console.anthropic.com), best quality) or **Gemini** ([aistudio.google.com/apikey](https://aistudio.google.com/apikey), has a free tier) — pick the provider in Settings |
+## Download (Linux)
 
-Transcription runs **locally and free** — no audio ever leaves your machine.
-Only the text transcript is sent to Claude.
+Grab `Notra-x86_64.AppImage` from the
+[latest release](https://github.com/zerodecay357/notra/releases), then:
 
-## Setup
+```bash
+chmod +x Notra-x86_64.AppImage
+./Notra-x86_64.AppImage
+```
+
+That is the whole install. Python, ffmpeg and the LaTeX engine are all inside
+the file, so there is nothing else to set up.
+
+**Requirements**
+
+| | |
+|---|---|
+| OS | Ubuntu 22.04 or newer (Debian 12+, Fedora 36+, recent Arch/Mint all work) |
+| CPU | 64-bit Intel/AMD. No ARM build yet |
+| API key | free Gemini key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey), no card needed, or Claude at [console.anthropic.com](https://console.anthropic.com) for the best notes |
+
+**First run.** Click **Settings**, choose your provider, paste the key. Your
+first recording downloads the Whisper model (about 500 MB) and the first PDF
+fetches the LaTeX packages it needs, so keep internet on for that first run.
+Everything is cached afterwards and works offline.
+
+**If it will not start**, your system is probably missing the library AppImages
+use to mount themselves:
+
+```bash
+sudo apt install libfuse2
+```
+
+Or run it without needing that at all:
+
+```bash
+./Notra-x86_64.AppImage --appimage-extract-and-run
+```
+
+## Run from source
+
+For development, or on a platform without a build yet:
 
 ```bash
 pip3 install -r requirements.txt
 ./run.sh
 ```
 
-Open <http://localhost:8000>, click **Settings**, paste your API key. That's it.
-The key is written to `.env` in Notra's per-user data directory (see Layout
-below) — never inside this repo, so there's nothing to accidentally commit.
+Open <http://localhost:8000>, click **Settings**, paste your API key. This mode
+needs `ffmpeg` (`sudo apt install ffmpeg`) and a LaTeX engine — **tectonic** is
+recommended (a single binary from
+[tectonic-typesetting.github.io](https://tectonic-typesetting.github.io), drop
+it in `bin/` or on PATH; `scripts/fetch-bin.sh` will fetch it for you), or TeX
+Live's `pdflatex` (`sudo apt install texlive-latex-extra
+texlive-fonts-recommended`, about 4 GB).
+
+Your API key is written to `.env` in Notra's per-user data directory (see
+Layout below), never inside this repo, so there is nothing to accidentally
+commit.
+
+## Building the desktop app
+
+```bash
+pip3 install -r requirements-desktop.txt
+./scripts/fetch-bin.sh                    # static ffmpeg + tectonic into bin/
+pyinstaller notra.spec                    # -> dist/notra/
+```
+
+Build inside a clean virtualenv with `PYTHONPATH` unset — unrelated packages on
+the system path get swept into the bundle otherwise. `desktop_main.py` also
+accepts `NOTRA_SELFTEST=1`, which exercises transcription and PDF compilation
+inside the built app without needing an API key.
 
 ## Using it
 
@@ -46,10 +101,15 @@ below) — never inside this repo, so there's nothing to accidentally commit.
    transcribe → Claude writes → compile PDF. Progress is live.
 5. Read the PDF in-app, or download the `.pdf` / `.tex`.
 
+The **Courses** tab in the sidebar collects everything course by course: a card
+per course with its lecture count and most recent lecture, and inside it just
+that course's notes.
+
 Courses are a folder-based database: each one is a directory under
-`data/courses/<course>/`, and every finished PDF is automatically filed into
-that course's `lectures/` folder (with a small `.json` of the lecture details
-next to it). Deleting a course's folder removes it from the dropdown.
+`courses/<course>/` in the data directory, and every finished PDF is
+automatically filed into that course's `lectures/` folder (with a small `.json`
+of the lecture details next to it). Deleting a course's folder removes it from
+the dropdown.
 
 Anything you record is kept in the sidebar library. **Regenerate** re-runs
 Claude against the existing transcript — useful after you change the topic
@@ -86,8 +146,9 @@ a References section citing standard texts with chapter numbers.
 | Effort | `high` is the sweet spot; `xhigh` for dense technical lectures. |
 | Whisper model | `small` is the balance. `medium` is noticeably more accurate but ~3× slower on CPU. `tiny` for a quick draft. |
 | CPU cores for transcription | `0` (auto) uses all cores but one, so the machine stays responsive while it works. Set a specific number to reserve more headroom, or if you want to push it higher than the auto default. |
-| Spoken language | Leave on auto unless it's mis-detecting. |
+| Spoken language | Leave on automatic unless it's mis-detecting. |
 | Notes style | `detailed` (replaces attending) or `concise` (revision-oriented). |
+| Your data | Shows where your lectures, PDFs and key are stored, with a button to open that folder. |
 
 **Speed:** on a 12-core CPU with no GPU, `small` transcribes roughly 5–8× faster
 than real time — a 50-minute lecture takes about 7–10 minutes. Claude then takes
